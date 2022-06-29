@@ -1,0 +1,14 @@
+name: NationsPlus
+version: "${project.version}"
+main: com.ollethunberg.nationsplus.NationsPlus
+api-version: 1.19
+prefix: NationsPlus
+authors: [OlleThunberg]
+description: Plugin developed for HTS Civilization
+commands:
+  nationsplus:
+    description: NationsPlus help command
+    usage: /<command>
+  nation:
+    description: Nation Command
+    usage: /<command>
