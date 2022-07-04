@@ -11,7 +11,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.util.StringUtil;
 
 public class NationAutoComplete implements TabCompleter {
-    private static final String[] keywords = { "create", "tax", "war", "neutral", "peace", "list" };
+    private static final String[] keywords = { "create", "tax", "war", "neutral", "peace", "list", "join" };
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {

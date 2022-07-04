@@ -58,6 +58,11 @@ public class CommandHandler implements CommandExecutor {
                     InfoNationCommand infoNationCommand = new InfoNationCommand(conn);
                     infoNationCommand.execute(executor, args[1]);
                     return true;
+                } else if (args[0].equalsIgnoreCase("join")) {
+                    // Execute the join nation command
+                    JoinNationCommand joinNationCommand = new JoinNationCommand(conn);
+                    joinNationCommand.execute(executor, args[1]);
+                    return true;
                 }
 
             }

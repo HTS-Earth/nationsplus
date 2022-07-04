@@ -35,6 +35,6 @@ public class DatabaseManager {
         } else {
             plugin.getLogger().info(("Database structure already in place. No need to import new SQL data. "));
         }
-
     }
+
 }

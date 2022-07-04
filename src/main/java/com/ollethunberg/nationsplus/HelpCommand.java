@@ -15,6 +15,7 @@ public class HelpCommand {
             put("/nation peace <nation name>", "Declares peace to another nation");
             put("/nation list", "List the nation stats");
             put("/nation info <nation name>", "Displays the info of a nation");
+            put("/nation join <nation name>", "Join a nation! (You can't leave)");
         }
     };
 
