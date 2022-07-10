@@ -17,7 +17,7 @@ public class JoinNationCommand {
 
     public void execute(Player player, String nationName) {
         try {
-            String updatePlayerNationIdSQL = "UPDATE player SET nation_id = ? WHERE player_id = ?";
+            String updatePlayerNationIdSQL = "UPDATE player SET nation = ? WHERE uid = ?";
             PreparedStatement prepareUpdateStatement = conn.prepareStatement(updatePlayerNationIdSQL);
             prepareUpdateStatement.setString(1, nationName);
             prepareUpdateStatement.setString(2, player.getUniqueId().toString());
