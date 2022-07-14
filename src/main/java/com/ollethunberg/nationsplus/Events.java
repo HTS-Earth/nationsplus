@@ -39,7 +39,20 @@ public class Events implements Listener {
                 prepareInsertStatement.executeUpdate();
             } else {
                 plugin.getLogger().info("Player does exist in the database!");
-
+                // Check if the player has a ban on them on the player_bans table
+                String playerBannedUntil = "SELECT banned_date + (banned_minutes * interval '1 minute') as banned_until FROM player_bans WHERE player_id = ? order by banned_date DESC;";
+                PreparedStatement preparePlayerBannedStatement = conn.prepareStatement(playerBannedUntil);
+                preparePlayerBannedStatement.setString(1, event.getPlayer().getUniqueId().toString());
+                ResultSet rsPlayerBannedUntil = preparePlayerBannedStatement.executeQuery();
+                rsPlayerBannedUntil.next();
+                if (rsPlayerBannedUntil.getTimestamp("banned_until") != null) {
+                    if (rsPlayerBannedUntil.getTimestamp("banned_until")
+                            .after(new Timestamp(System.currentTimeMillis()))) {
+                        plugin.getLogger().info("Player is banned!");
+                        event.getPlayer().kickPlayer("You are banned from the server!");
+                        return;
+                    }
+                }
                 String updatePlayerLastLoginSQL = "UPDATE player SET last_login=CURRENT_TIMESTAMP, player_name=? where uid = ?";
                 PreparedStatement prepareUpdateStatement = conn.prepareStatement(updatePlayerLastLoginSQL);
                 prepareUpdateStatement.setString(1, event.getPlayer().getDisplayName());

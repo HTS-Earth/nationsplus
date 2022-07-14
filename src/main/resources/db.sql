@@ -12,9 +12,21 @@
  Target Server Version : 140003
  File Encoding         : 65001
 
- Date: 10/07/2022 20:24:36
+ Date: 14/07/2022 19:37:19
 */
 
+
+-- ----------------------------
+-- Sequence structure for player_bans_id_seq
+-- ----------------------------
+DROP SEQUENCE IF EXISTS "public"."player_bans_id_seq";
+CREATE SEQUENCE "public"."player_bans_id_seq" 
+INCREMENT 1
+MINVALUE  1
+MAXVALUE 2147483647
+START 1
+CACHE 1;
+ALTER SEQUENCE "public"."player_bans_id_seq" OWNER TO "postgres";
 
 -- ----------------------------
 -- Table structure for nation
@@ -66,6 +78,26 @@ CREATE TABLE "public"."player" (
 ALTER TABLE "public"."player" OWNER TO "postgres";
 
 -- ----------------------------
+-- Table structure for player_bans
+-- ----------------------------
+DROP TABLE IF EXISTS "public"."player_bans";
+CREATE TABLE "public"."player_bans" (
+  "player_id" text COLLATE "pg_catalog"."default" NOT NULL,
+  "banned_date" timestamptz(6) NOT NULL,
+  "banned_minutes" int4 NOT NULL,
+  "id" int4 NOT NULL DEFAULT nextval('player_bans_id_seq'::regclass)
+)
+;
+ALTER TABLE "public"."player_bans" OWNER TO "postgres";
+
+-- ----------------------------
+-- Alter sequences owned by
+-- ----------------------------
+ALTER SEQUENCE "public"."player_bans_id_seq"
+OWNED BY "public"."player_bans"."id";
+SELECT setval('"public"."player_bans_id_seq"', 1, true);
+
+-- ----------------------------
 -- Primary Key structure for table nation
 -- ----------------------------
 ALTER TABLE "public"."nation" ADD CONSTRAINT "nation_pkey" PRIMARY KEY ("name");
@@ -79,6 +111,11 @@ ALTER TABLE "public"."nation_relations" ADD CONSTRAINT "nation_relations_pkey" P
 -- Primary Key structure for table player
 -- ----------------------------
 ALTER TABLE "public"."player" ADD CONSTRAINT "player_pkey" PRIMARY KEY ("uid");
+
+-- ----------------------------
+-- Primary Key structure for table player_bans
+-- ----------------------------
+ALTER TABLE "public"."player_bans" ADD CONSTRAINT "player_bans_pkey" PRIMARY KEY ("id");
 
 -- ----------------------------
 -- Foreign Keys structure for table nation
@@ -96,3 +133,8 @@ ALTER TABLE "public"."nation_relations" ADD CONSTRAINT "fk_nation_two" FOREIGN K
 -- Foreign Keys structure for table player
 -- ----------------------------
 ALTER TABLE "public"."player" ADD CONSTRAINT "fk_nation" FOREIGN KEY ("nation") REFERENCES "public"."nation" ("name") ON DELETE NO ACTION ON UPDATE NO ACTION;
+
+-- ----------------------------
+-- Foreign Keys structure for table player_bans
+-- ----------------------------
+ALTER TABLE "public"."player_bans" ADD CONSTRAINT "fk_banned_player" FOREIGN KEY ("player_id") REFERENCES "public"."player" ("uid") ON DELETE NO ACTION ON UPDATE NO ACTION;

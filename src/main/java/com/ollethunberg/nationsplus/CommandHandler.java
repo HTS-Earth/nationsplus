@@ -63,6 +63,12 @@ public class CommandHandler implements CommandExecutor {
                     JoinNationCommand joinNationCommand = new JoinNationCommand(conn);
                     joinNationCommand.execute(executor, args[1]);
                     return true;
+                } else if (args[0].equalsIgnoreCase("war") || args[0].equalsIgnoreCase("neutral")
+                        || args[0].equalsIgnoreCase("peace")) {
+                    // Execute relationship command
+                    NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands(conn);
+                    nationRelationshipCommands.execute(executor, args[1], args[0]);
+                    return true;
                 }
 
             }
