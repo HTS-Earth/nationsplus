@@ -33,4 +33,12 @@ public class SQLHelper {
         return preparedStatement.getResultSet();
     }
 
+    public void update(String query, Object... args) throws SQLException {
+        PreparedStatement preparedStatement = conn.prepareStatement(query);
+        for (int i = 0; i < args.length; i++) {
+            preparedStatement.setObject(i + 1, args[i]);
+        }
+        preparedStatement.executeUpdate();
+    }
+
 }

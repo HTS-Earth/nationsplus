@@ -49,7 +49,7 @@ public class Events implements Listener {
                     if (rsPlayerBannedUntil.getTimestamp("banned_until")
                             .after(new Timestamp(System.currentTimeMillis()))) {
                         plugin.getLogger().info("Player is banned!");
-                        event.getPlayer().kickPlayer("You are banned from the server!");
+                        event.getPlayer().kickPlayer("§cYou are not able to join the server, ");
                         return;
                     }
                 }
