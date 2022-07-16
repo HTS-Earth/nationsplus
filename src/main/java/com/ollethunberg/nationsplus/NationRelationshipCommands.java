@@ -81,7 +81,7 @@ public class NationRelationshipCommands {
                     // Player is the king
                     // Check if a relationshop already exists in the database
                     ResultSet rsRelationship = sqlHelper.query(
-                            "SELECT * FROM nation_relations WHERE (nation_one = ? AND nation_second = ?) OR (nation_one   = ? AND nation_second = ?)",
+                            "SELECT * FROM nation_relations WHERE (UPPER(nation_one) = UPPER(?) AND UPPER(nation_second) = UPPER(?)) OR (UPPER(nation_one) = UPPER(?) AND UPPER(nation_second) = UPPER(?))",
                             rs.getString("nation"), targetNation, targetNation, rs.getString("nation"));
                     plugin.getLogger().info("Checking if a relationship already exists");
                     if (rsRelationship.next()) {
@@ -179,7 +179,15 @@ public class NationRelationshipCommands {
             }
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+
+            // Print stacktrace
+            e.printStackTrace();
+
+            // Send to the user that his command was incorrectly used
+            executor.sendMessage("§cYou have incorrectly used this command. Please refer to /nationplus for help!");
+            if (executor.hasPermission("nationsplus.tester")) {
+                executor.sendMessage("§cDetails: " + e.getLocalizedMessage());
+            }
         }
     }
 

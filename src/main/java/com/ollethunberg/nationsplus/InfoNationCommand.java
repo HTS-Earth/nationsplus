@@ -1,35 +1,29 @@
 package com.ollethunberg.nationsplus;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
 
 public class InfoNationCommand {
-    Connection conn;
+    SQLHelper sqlHelper;
 
     public InfoNationCommand(Connection _connection) {
-        conn = _connection;
+        sqlHelper = new SQLHelper(_connection);
     }
 
     public void execute(Player player, String nation) {
         try {
             // Get the nations and list message them to the player
 
-            String getNationsSQL = "SELECT n.*, p.player_name as king FROM nation as n LEFT JOIN player as p on n.king_id=p.uid where n.name=? order by n.balance desc ;";
-            PreparedStatement prepareStatementNation = conn.prepareStatement(getNationsSQL);
-            prepareStatementNation.setString(1, nation);
-            prepareStatementNation.executeQuery();
-            ResultSet rsNation = prepareStatementNation.getResultSet();
+            String getNationsSQL = "SELECT n.*, p.player_name as king FROM nation as n LEFT JOIN player as p on n.king_id=p.uid where UPPER(n.name)=UPPER(?) order by n.balance desc ;";
+            ResultSet rsNation = sqlHelper.query(getNationsSQL, nation);
             rsNation.next();
 
-            String getNationMemeberCountSQL = "SELECT count(*) as count FROM player where nation=?;";
-            PreparedStatement prepareStatementMemberCount = conn.prepareStatement(getNationMemeberCountSQL);
-            prepareStatementMemberCount.setString(1, nation);
-            prepareStatementMemberCount.executeQuery();
-            ResultSet rsMemberCount = prepareStatementMemberCount.getResultSet();
+            // Use sqlHelper
+            String getNationMemeberCountSQL = "SELECT count(*) as count FROM player where UPPER(nation)=UPPER(?);";
+            ResultSet rsMemberCount = sqlHelper.query(getNationMemeberCountSQL, nation);
             rsMemberCount.next();
 
             player.sendMessage("§2- Nation Inspector -");
@@ -44,7 +38,10 @@ public class InfoNationCommand {
             player.sendMessage("§cKills§r: " + rsNation.getString("kills"));
 
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            // If nation could not be found, display error message
+            player.sendMessage("§cNation not found.");
+            e.printStackTrace();
+
         }
     }
 }

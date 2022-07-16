@@ -9,6 +9,8 @@ commands:
   nationsplus:
     description: NationsPlus help command
     usage: /<command>
+    aliases: [np]
   nation:
     description: Nation Command
     usage: /<command>
+    aliases: [n]

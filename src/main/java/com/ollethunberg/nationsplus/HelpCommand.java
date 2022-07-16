@@ -8,14 +8,16 @@ import org.bukkit.command.CommandSender;
 public class HelpCommand {
     public static final Map<String, String> commands = new HashMap<String, String>() {
         {
-            put("/nation create <name> <prefix>", "Creates a new nation");
-            put("/nation tax <percentage>", "Sets the tax of the nation");
-            put("/nation war <nation name>", "Declares wars on another nation");
-            put("/nation neutral <nation name>", "Declares neutrality to another nation");
-            put("/nation peace <nation name>", "Declares peace to another nation");
-            put("/nation list", "List the nation stats");
-            put("/nation info <nation name>", "Displays the info of a nation");
-            put("/nation join <nation name>", "Join a nation! (You can't leave)");
+            put("/n create <name> <prefix>", "Creates a new nation");
+            put("/n tax <percentage>", "Sets the tax of the nation");
+            put("/n war <nation name>", "Declares wars on another nation");
+            put("/n neutral <nation name>", "Declares neutrality to another nation");
+            put("/n peace <nation name>", "Declares peace to another nation");
+            put("/n ally <nation name>", "Declares ally to another nation");
+            put("/n enemy <nation name>", "Declares enemeies to another nation");
+            put("/n list", "List the nation stats");
+            put("/n info <nation name>", "Displays the info of a nation");
+            put("/n join <nation name>", "Join a nation! (You can't leave)");
         }
     };
 

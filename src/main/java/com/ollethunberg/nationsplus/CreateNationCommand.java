@@ -5,9 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 public class CreateNationCommand {
     Connection conn;
+    Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
 
     public CreateNationCommand(Connection _connection) {
         conn = _connection;
@@ -22,6 +24,7 @@ public class CreateNationCommand {
             prepareInsertStatement.setString(3, king.getUniqueId().toString());
             prepareInsertStatement.executeUpdate();
             // Message the king that the nation was created
+
             king.sendMessage("§2Your nation was successfully created!");
 
         } catch (SQLException e) {
