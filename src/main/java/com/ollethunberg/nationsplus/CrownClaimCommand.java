@@ -19,13 +19,13 @@ public class CrownClaimCommand extends DatabaseInteractor {
     }
 
     public static final ItemStack crown(String nation) {
-        ItemStack goldenHelmet = new ItemStack(Material.GOLDEN_HELMET, 1);
-        goldenHelmet.addUnsafeEnchantment(Enchantment.DURABILITY, 10);
-        goldenHelmet.addUnsafeEnchantment(Enchantment.OXYGEN, 2);
-        goldenHelmet.addUnsafeEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 5);
-        ItemMeta goldenHelmetMeta = goldenHelmet.getItemMeta();
-        goldenHelmetMeta.setUnbreakable(true);
-        goldenHelmetMeta.setDisplayName("§6§lCrown");
+        ItemStack crown = new ItemStack(Material.CHAINMAIL_HELMET, 1);
+        crown.addUnsafeEnchantment(Enchantment.DURABILITY, 10);
+        crown.addUnsafeEnchantment(Enchantment.OXYGEN, 2);
+        crown.addUnsafeEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 5);
+        ItemMeta crownMeta = crown.getItemMeta();
+        crownMeta.setUnbreakable(true);
+        crownMeta.setDisplayName("§6§lCrown");
         List<String> lore = new ArrayList<String>(); // create a List<String> for the lore
         lore.add("§eUse the crown to claim the throne");
         lore.add("§a/crown claim");
@@ -33,9 +33,9 @@ public class CrownClaimCommand extends DatabaseInteractor {
         // Add the nation name to the lore
         lore.add(nation);
 
-        goldenHelmetMeta.setLore(lore); // set the ItemMeta's lore to the List<String>
-        goldenHelmet.setItemMeta(goldenHelmetMeta); // set the ItemStack's ItemMeta to the ItemMeta
-        return goldenHelmet;
+        crownMeta.setLore(lore); // set the ItemMeta's lore to the List<String>
+        crown.setItemMeta(crownMeta); // set the ItemStack's ItemMeta to the ItemMeta
+        return crown;
     }
 
     public void execute(Player p) {
@@ -58,7 +58,7 @@ public class CrownClaimCommand extends DatabaseInteractor {
                 if (rs.getString("nation") != null) {
                     String claimCrownSQLString = "UPDATE nation SET king_id = ? WHERE name = ?";
                     sqlHelper.update(claimCrownSQLString, p.getUniqueId().toString(), rs.getString("nation"));
-                    // Remove the crown from their inventory
+
                     p.sendMessage("§aYou have claimed the crown!");
 
                 } else {
@@ -67,7 +67,7 @@ public class CrownClaimCommand extends DatabaseInteractor {
             } catch (SQLException e) {
                 e.printStackTrace();
                 // Message the user that something went wrong claiming the crown
-                p.sendMessage("§cSomething went wrong claiming the crown.");
+                p.sendMessage("§cSomething went wrong claiming the crown. Make sure you are in a nation.");
             }
 
         } else {
