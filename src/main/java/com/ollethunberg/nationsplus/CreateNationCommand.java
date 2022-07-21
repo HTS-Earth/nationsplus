@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 public class CreateNationCommand {
@@ -23,6 +24,10 @@ public class CreateNationCommand {
             prepareInsertStatement.setString(2, prefix);
             prepareInsertStatement.setString(3, king.getUniqueId().toString());
             prepareInsertStatement.executeUpdate();
+            // Give a crown with the antion to the king
+            ItemStack crown = CrownClaimCommand.crown(nationName);
+            king.getInventory().addItem(crown);
+
             // Message the king that the nation was created
 
             king.sendMessage("§2Your nation was successfully created!");

@@ -10,7 +10,6 @@ import org.bukkit.plugin.Plugin;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.HashMap;
 
 public class Events implements Listener {

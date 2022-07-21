@@ -73,7 +73,12 @@ public class CommandHandler implements CommandExecutor {
                     nationRelationshipCommands.execute(executor, args[1], args[0]);
                     return true;
                 }
-
+            } else if (cmd.equalsIgnoreCase("crown")) {
+                if (args[0].equalsIgnoreCase("claim")) {
+                    CrownClaimCommand crownClaimCommand = new CrownClaimCommand(conn);
+                    crownClaimCommand.execute(executor);
+                    return true;
+                }
             }
         }
         return true;
