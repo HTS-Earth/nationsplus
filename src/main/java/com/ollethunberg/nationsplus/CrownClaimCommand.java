@@ -25,7 +25,7 @@ public class CrownClaimCommand extends DatabaseInteractor {
         crown.addUnsafeEnchantment(Enchantment.PROTECTION_ENVIRONMENTAL, 5);
         ItemMeta crownMeta = crown.getItemMeta();
         crownMeta.setUnbreakable(true);
-        crownMeta.setDisplayName("§6§lCrown");
+        crownMeta.setDisplayName("§6§lCrown of " + nation);
         List<String> lore = new ArrayList<String>(); // create a List<String> for the lore
         lore.add("§eUse the crown to claim the throne");
         lore.add("§a/crown claim");
