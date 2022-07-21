@@ -1,18 +1,18 @@
 /*
  Navicat Premium Data Transfer
 
- Source Server         : Postgres
+ Source Server         : Virtcon
  Source Server Type    : PostgreSQL
- Source Server Version : 140003
+ Source Server Version : 120002
  Source Host           : localhost:5432
  Source Catalog        : nationsplus
  Source Schema         : public
 
  Target Server Type    : PostgreSQL
- Target Server Version : 140003
+ Target Server Version : 120002
  File Encoding         : 65001
 
- Date: 14/07/2022 19:37:19
+ Date: 21/07/2022 18:08:12
 */
 
 
@@ -56,7 +56,8 @@ CREATE TABLE "public"."nation_relations" (
   "nation_one" text COLLATE "pg_catalog"."default" NOT NULL,
   "nation_second" text COLLATE "pg_catalog"."default" NOT NULL,
   "status" text COLLATE "pg_catalog"."default" NOT NULL,
-  "peace_available" bool
+  "peace_available" bool,
+  "wants_peace" text COLLATE "pg_catalog"."default"
 )
 ;
 ALTER TABLE "public"."nation_relations" OWNER TO "postgres";
@@ -95,7 +96,7 @@ ALTER TABLE "public"."player_bans" OWNER TO "postgres";
 -- ----------------------------
 ALTER SEQUENCE "public"."player_bans_id_seq"
 OWNED BY "public"."player_bans"."id";
-SELECT setval('"public"."player_bans_id_seq"', 1, true);
+SELECT setval('"public"."player_bans_id_seq"', 2, false);
 
 -- ----------------------------
 -- Primary Key structure for table nation
@@ -128,6 +129,7 @@ ALTER TABLE "public"."nation" ADD CONSTRAINT "fk_successorId" FOREIGN KEY ("succ
 -- ----------------------------
 ALTER TABLE "public"."nation_relations" ADD CONSTRAINT "fk_nation_one" FOREIGN KEY ("nation_one") REFERENCES "public"."nation" ("name") ON DELETE NO ACTION ON UPDATE NO ACTION;
 ALTER TABLE "public"."nation_relations" ADD CONSTRAINT "fk_nation_two" FOREIGN KEY ("nation_second") REFERENCES "public"."nation" ("name") ON DELETE NO ACTION ON UPDATE NO ACTION;
+ALTER TABLE "public"."nation_relations" ADD CONSTRAINT "nation_relations_wants_peace_fkey" FOREIGN KEY ("wants_peace") REFERENCES "public"."nation" ("name") ON DELETE NO ACTION ON UPDATE NO ACTION;
 
 -- ----------------------------
 -- Foreign Keys structure for table player
