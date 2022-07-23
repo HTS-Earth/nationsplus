@@ -1,5 +1,6 @@
 package com.ollethunberg.nationsplus;
 
+import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.postgresql.Driver;
 
@@ -9,6 +10,7 @@ public final class NationsPlus extends JavaPlugin {
     public Connection connection;
     public DatabaseManager databaseManager;
     private CommandHandler commandHandler;
+    public Configuration config;
 
     @Override
     public void onEnable() {
@@ -20,7 +22,9 @@ public final class NationsPlus extends JavaPlugin {
         try {
             DriverManager.registerDriver(new Driver());
             connection = DriverManager.getConnection(
-                    "jdbc:postgresql://localhost:5432/nationsplus?stringtype=unspecified", "postgres", "");
+                    "jdbc:postgresql://" + config.getString("database.ip") + ":" + config.getInt("database.port") + "/"
+                            + config.getString("database.database") + "?stringtype=unspecified",
+                    config.getString("database.username"), config.getString("database.password"));
             databaseManager = new DatabaseManager(connection);
             getLogger().info(connection.toString() + " connected to DB successfully!");
             // Check if database structure exists.
@@ -63,5 +67,6 @@ public final class NationsPlus extends JavaPlugin {
     public void loadConfig() {
         getConfig().options().copyDefaults(true);
         saveConfig();
+        config = getConfig();
     }
 }
