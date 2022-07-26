@@ -68,5 +68,6 @@ public final class NationsPlus extends JavaPlugin {
         getConfig().options().copyDefaults(true);
         saveConfig();
         config = getConfig();
+
     }
 }

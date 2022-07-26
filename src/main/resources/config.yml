@@ -4,3 +4,7 @@ database:
   username: postgres
   password:
   database: nationsplus
+reinforcement:
+  IRON_INGOT: 10
+  GOLD_INGOT: 18
+  DIAMOND: 35
