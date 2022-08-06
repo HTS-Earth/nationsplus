@@ -27,7 +27,7 @@ public class Events implements Listener {
     private SQLHelper sqlHelper;
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     private Configuration config = plugin.getConfig();
-    HashMap<String, String> prefixCache = new HashMap<String, String>();
+    static HashMap<String, String> prefixCache = new HashMap<String, String>();
 
     public Events(Connection _connection) {
 
