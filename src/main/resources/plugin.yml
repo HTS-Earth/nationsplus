@@ -18,3 +18,7 @@ commands:
     description: Crown claiming command
     usage: /<command> claim
     aliases: [c]
+  reinforce:
+    description: Reinforcement command
+    usage: /<command> <nation | private>
+    aliases: [rf]

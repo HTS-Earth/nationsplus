@@ -121,6 +121,16 @@ public class Events implements Listener {
         try (ResultSet rs = sqlHelper.query(getReinforcementSQL, block_id,
                 event.getBlock().getLocation().getWorld().getName())) {
             if (rs.next()) {
+                // Check if the player is the owner of the reinforcement
+                if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
+                        && rs.getString("reinforcement_mode").equals("PRIVATE")) {
+                    // Remove the reinforcement
+                    String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                    sqlHelper.update(removeReinforcementSQL, block_id,
+                            event.getBlock().getLocation().getWorld().getName());
+                    return;
+
+                }
                 int newHealth = rs.getInt("health") - 1;
                 if (newHealth > 0) {
                     event.setCancelled(true);
@@ -166,13 +176,13 @@ public class Events implements Listener {
         final Block block = event.getBlock();
         final ItemStack itemInHand = event.getItemInHand();
 
-        if (block.getType() == Material.AIR)
+        if (block.getType() == Material.AIR || !block.getType().isSolid())
             return;
-        // check if the block is solid
-        if (!block.getType().isSolid()) {
-            event.getPlayer().sendMessage("§cYou can only reinforce solid blocks!");
+        // check if the hardness of the block is 0
+        if (block.getType().getHardness() == 0) {
             return;
         }
+
         // If the item is either iron, gold or diamond
         switch (itemInHand.getType()) {
             case IRON_INGOT:
@@ -184,6 +194,28 @@ public class Events implements Listener {
             case DIAMOND:
                 ReinforceBlock(event, config.getInt("reinforcement.DIAMOND"), block, itemInHand);
                 return;
+            case STICK:
+                // If the item is a stick, check health and the owner of the reinforcement
+                String getReinforcementSQL = "SELECT r.health,p.player_name, r.nation, r.reinforcement_mode  FROM block_reinforcement as r left join player as p on r.player_id = p.uid WHERE r.block_id = ? AND r.world = ?;";
+                String block_id = block.getLocation().getBlockX() + "," + block.getLocation().getBlockY() + ","
+                        + block.getLocation().getBlockZ();
+                try (ResultSet rs = sqlHelper.query(getReinforcementSQL, block_id,
+                        block.getLocation().getWorld().getName())) {
+                    if (rs.next()) {
+                        boolean isReinforcedByNation = (rs.getString("reinforcement_mode")).equals("NATION");
+                        String owner = isReinforcedByNation ? ("§6[§r" + rs.getString("nation") + "§6]§r (§cnation§r)")
+                                : rs.getString("player_name");
+
+                        event.getPlayer().sendMessage(
+                                "§aThis block is reinforced by "
+                                        + owner + " with " + rs.getInt("health") + " health!");
+
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    return;
+                }
+
             default:
                 return;
         }
@@ -199,7 +231,7 @@ public class Events implements Listener {
                 + "," + blockLocation.getBlockZ();
         // First, get information about the player and if he is in a nation async from
         // the database
-        String getPlayerInfoSQL = "SELECT uid, nation FROM player WHERE uid = ?";
+        String getPlayerInfoSQL = "SELECT uid, nation, reinforcement_mode FROM player WHERE uid = ?";
         Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
             @Override
             public void run() {
@@ -218,14 +250,15 @@ public class Events implements Listener {
 
                         String nation = rs.getString("nation");
                         String uid = rs.getString("uid");
+                        String reinforcement_mode = rs.getString("reinforcement_mode");
 
                         // Insert the information to the database async
-                        String insertReinforcementSQL = "INSERT INTO block_reinforcement (block_id, world, health, nation, player_id, block_type, reinforcement_type) VALUES (?, ?, ?, ?, ?, ?, ?);";
+                        String insertReinforcementSQL = "INSERT INTO block_reinforcement (block_id, world, health, nation, player_id, block_type, reinforcement_type, reinforcement_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
                         sqlHelper.update(insertReinforcementSQL, block_id, event.getPlayer().getWorld().getName(),
                                 health, nation, uid,
                                 block.getType().toString(),
-                                itemInHand.getType().name());
+                                itemInHand.getType().name(), reinforcement_mode);
 
                         p.sendMessage("§aSuccessfully reinforced block!");
                         block.getWorld().spawnParticle(org.bukkit.Particle.DRAGON_BREATH,

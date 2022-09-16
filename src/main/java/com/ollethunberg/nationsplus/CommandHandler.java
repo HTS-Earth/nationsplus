@@ -79,6 +79,12 @@ public class CommandHandler implements CommandExecutor {
                     crownClaimCommand.execute(executor);
                     return true;
                 }
+            } else if (cmd.equalsIgnoreCase("reinforce")) {
+                String reinforceTarget = args.length > 0 ? args[0] : null;
+
+                ReinforceCommand reinforceCommand = new ReinforceCommand(conn);
+                reinforceCommand.execute(executor, reinforceTarget);
+                return true;
             }
         }
         return true;

@@ -44,6 +44,7 @@ public final class NationsPlus extends JavaPlugin {
             getCommand("nationsplus").setExecutor(commandHandler);
             getCommand("nation").setExecutor(commandHandler);
             getCommand("crown").setExecutor(commandHandler);
+            getCommand("reinforce").setExecutor(commandHandler);
             getCommand("nation").setTabCompleter(new NationAutoComplete());
 
         } catch (SQLException e) {
