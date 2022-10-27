@@ -1,22 +1,20 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import com.ollethunberg.nationsplus.NationsPlus;
+import com.ollethunberg.nationsplus.lib.SQLHelper;
+
 import net.md_5.bungee.api.ChatColor;
 
 public class NationRelationshipCommands {
-    SQLHelper sqlHelper;
+
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     static String[] statusStrings = { "war", "peace", "ally", "neutral", "enemy", "peace_requested" };
-
-    public NationRelationshipCommands(Connection conn) {
-        sqlHelper = new SQLHelper(conn);
-    }
 
     public static Boolean isStatusValid(String status) {
         for (String s : statusStrings) {
@@ -49,7 +47,7 @@ public class NationRelationshipCommands {
     public void executeStatus(Player player) {
         // List all the statuses of the nations to the player
         try {
-            ResultSet rs = sqlHelper.query("SELECT * FROM nation_relations ");
+            ResultSet rs = SQLHelper.query("SELECT * FROM nation_relations ");
             while (rs.next()) {
                 String nation1 = rs.getString("nation_one");
                 String nation2 = rs.getString("nation_second");
@@ -70,7 +68,7 @@ public class NationRelationshipCommands {
 
         try {
             // Find which nation the player belongs to
-            ResultSet rs = sqlHelper.query(
+            ResultSet rs = SQLHelper.query(
                     "SELECT n.king_id, n.name as nation FROM player as p inner join nation as n on n.name = p.nation WHERE p.uid = ?",
                     executor.getUniqueId().toString());
             plugin.getLogger().info("Executing nation relationship command");
@@ -80,7 +78,7 @@ public class NationRelationshipCommands {
                 if (rs.getString("king_id").equalsIgnoreCase(executor.getUniqueId().toString())) {
                     // Player is the king
                     // Check if a relationshop already exists in the database
-                    ResultSet rsRelationship = sqlHelper.query(
+                    ResultSet rsRelationship = SQLHelper.query(
                             "SELECT * FROM nation_relations WHERE (UPPER(nation_one) = UPPER(?) AND UPPER(nation_second) = UPPER(?)) OR (UPPER(nation_one) = UPPER(?) AND UPPER(nation_second) = UPPER(?))",
                             rs.getString("nation"), targetNation, targetNation, rs.getString("nation"));
                     plugin.getLogger().info("Checking if a relationship already exists");
@@ -106,7 +104,7 @@ public class NationRelationshipCommands {
                                 Boolean isPeaceAvailable = rsRelationship.getBoolean("peace_available");
                                 if (nationWantsPeace != null && nationWantsPeace.equalsIgnoreCase(targetNation)
                                         && isPeaceAvailable) {
-                                    sqlHelper.update(
+                                    SQLHelper.update(
                                             "UPDATE nation_relations SET status = ?, peace_available=false, wants_peace=null WHERE (nation_one = ? AND nation_second = ?) OR (nation_one = ? AND nation_second = ?)",
                                             "peace", rs.getString("nation"), targetNation, targetNation,
                                             rs.getString("nation"));
@@ -122,7 +120,7 @@ public class NationRelationshipCommands {
                                     // Request peace with the targetNation
                                     plugin.getLogger().info("Requesting peace with " + targetNation);
 
-                                    sqlHelper.update(
+                                    SQLHelper.update(
                                             "UPDATE nation_relations SET wants_peace = ?, peace_available = ?, status = 'peace-requested' WHERE (nation_one = ? AND nation_second = ?) OR (nation_one = ? AND nation_second = ?)",
                                             rs.getString("nation"), true, rs.getString("nation"), targetNation,
                                             targetNation,
@@ -139,7 +137,7 @@ public class NationRelationshipCommands {
                             }
                         } else {
                             // Update the relationship status to the new status
-                            sqlHelper.update(
+                            SQLHelper.update(
                                     "UPDATE nation_relations SET status = ? WHERE (nation_one = ? AND nation_second = ?) OR (nation_one = ? AND nation_second = ?)",
                                     status, rs.getString("nation"), targetNation, targetNation, rs.getString("nation"));
                             executor.sendMessage("§aYou have set the relationship between " + targetNation + " and "
@@ -151,7 +149,7 @@ public class NationRelationshipCommands {
                          * plugin.getLogger().info("Updating the relationship with " + targetNation +
                          * " and status "
                          * + status + " between nation " + rs.getString("nation"));
-                         * sqlHelper.update(
+                         * SQLHelper.update(
                          * "UPDATE nation_relations SET status = ? WHERE (nation_one = ? AND nation_second = ?) OR (nation_one = ? AND nation_second = ?)"
                          * ,
                          * status, rs.getString("nation"), targetNation, targetNation,
@@ -161,7 +159,7 @@ public class NationRelationshipCommands {
                     } else {
                         // No relationship exists
                         // Insert a new relationship
-                        sqlHelper.update(
+                        SQLHelper.update(
                                 "INSERT INTO nation_relations (nation_one, nation_second, status) VALUES (?, ?, ?)",
                                 rs.getString("nation"), targetNation, status);
                         executor.sendMessage("Updated realationship to nation " + targetNation);

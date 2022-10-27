@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -7,6 +7,8 @@ import java.sql.SQLException;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
+
+import com.ollethunberg.nationsplus.NationsPlus;
 
 public class CreateNationCommand {
     Connection conn;

@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
 import java.util.HashMap;
 import java.util.Map;

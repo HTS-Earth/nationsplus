@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -6,11 +6,12 @@ import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
 
+import com.ollethunberg.nationsplus.lib.SQLHelper;
+
 public class InfoNationCommand {
-    SQLHelper sqlHelper;
 
     public InfoNationCommand(Connection _connection) {
-        sqlHelper = new SQLHelper(_connection);
+
     }
 
     public void execute(Player player, String nation) {
@@ -18,12 +19,12 @@ public class InfoNationCommand {
             // Get the nations and list message them to the player
 
             String getNationsSQL = "SELECT n.*, p.player_name as king FROM nation as n LEFT JOIN player as p on n.king_id=p.uid where UPPER(n.name)=UPPER(?) order by n.balance desc ;";
-            ResultSet rsNation = sqlHelper.query(getNationsSQL, nation);
+            ResultSet rsNation = SQLHelper.query(getNationsSQL, nation);
             rsNation.next();
 
             // Use sqlHelper
             String getNationMemeberCountSQL = "SELECT count(*) as count FROM player where UPPER(nation)=UPPER(?);";
-            ResultSet rsMemberCount = sqlHelper.query(getNationMemeberCountSQL, nation);
+            ResultSet rsMemberCount = SQLHelper.query(getNationMemeberCountSQL, nation);
             rsMemberCount.next();
 
             player.sendMessage("§2- Nation Inspector -");

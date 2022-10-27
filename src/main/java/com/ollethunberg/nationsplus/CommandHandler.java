@@ -8,6 +8,16 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
+import com.ollethunberg.nationsplus.commands.CreateNationCommand;
+import com.ollethunberg.nationsplus.commands.CrownClaimCommand;
+import com.ollethunberg.nationsplus.commands.HelpCommand;
+import com.ollethunberg.nationsplus.commands.InfoNationCommand;
+import com.ollethunberg.nationsplus.commands.JoinNationCommand;
+import com.ollethunberg.nationsplus.commands.ListNationCommand;
+import com.ollethunberg.nationsplus.commands.NationRelationshipCommands;
+import com.ollethunberg.nationsplus.commands.ReinforceCommand;
+import com.ollethunberg.nationsplus.commands.TaxCommand;
+
 public class CommandHandler implements CommandExecutor {
 
     // This method is called, when somebody uses our command
@@ -38,51 +48,69 @@ public class CommandHandler implements CommandExecutor {
                     // Send help message using the HelpCommand class
                     HelpCommand help = new HelpCommand();
                     help.execute(executor, args);
+                    return true;
                 }
 
-                // Check for "create" argument
-                else if (args[0].equalsIgnoreCase("create") && executor.hasPermission("nationsplus.create")) {
-                    // Create the nation
-                    plugin.getLogger().info("Creating nation!");
-                    // Execute the create nation command
-                    CreateNationCommand createNationCommand = new CreateNationCommand(conn);
-                    createNationCommand.execute(args[1], args[2], executor);
-                    return true;
-                } else if (args[0].equalsIgnoreCase("list")) {
-                    // Execute the list nation command
-                    ListNationCommand listNationCommand = new ListNationCommand(conn);
-                    listNationCommand.execute(executor);
-                    return true;
-                } else if (args[0].equalsIgnoreCase("info")) {
-                    // Execute the info nation command
-                    InfoNationCommand infoNationCommand = new InfoNationCommand(conn);
-                    infoNationCommand.execute(executor, args[1]);
-                    return true;
-                } else if (args[0].equalsIgnoreCase("join")) {
-                    // Execute the join nation command
-                    JoinNationCommand joinNationCommand = new JoinNationCommand(conn);
-                    joinNationCommand.execute(executor, args[1]);
-                    return true;
-                } else if (args[0].equalsIgnoreCase("status")) {
-                    NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands(conn);
-                    nationRelationshipCommands.executeStatus(executor);
-                    return true;
-                } else if (NationRelationshipCommands.isStatusValid(args[0])) {
+                String subCommand = args[0];
+                switch (subCommand) {
+                    // Check for "create" argument
+                    case "create": {
+                        if (!executor.hasPermission("nationsplus.create"))
+                            return true;
+                        // Create the nation
+                        plugin.getLogger().info("Creating nation!");
+                        // Execute the create nation command
+                        CreateNationCommand createNationCommand = new CreateNationCommand(conn);
+                        createNationCommand.execute(args[1], args[2], executor);
+                        return true;
+                    }
+                    case "list": {
+                        // Execute the list nation command
+                        ListNationCommand listNationCommand = new ListNationCommand(conn);
+                        listNationCommand.execute(executor);
+                        return true;
+                    }
+                    case "info": {
+                        // Execute the info nation command
+                        InfoNationCommand infoNationCommand = new InfoNationCommand(conn);
+                        infoNationCommand.execute(executor, args[1]);
+                        return true;
+                    }
+                    case "join": {
+                        // Execute the join nation command
+                        JoinNationCommand joinNationCommand = new JoinNationCommand();
+                        joinNationCommand.execute(executor, args[1]);
+                        return true;
+                    }
+                    case "status": {
+                        NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands();
+                        nationRelationshipCommands.executeStatus(executor);
+                        return true;
+                    }
+                    case "tax": {
+                        // Execute the tax nation command
+                        TaxCommand taxCommand = new TaxCommand();
+                        taxCommand.execute(executor, args[1]);
+                        return true;
+                    }
+                }
+                if (NationRelationshipCommands.isStatusValid(subCommand)) {
                     // Execute relationship command
-                    NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands(conn);
+                    NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands();
                     nationRelationshipCommands.execute(executor, args[1], args[0]);
                     return true;
                 }
+
             } else if (cmd.equalsIgnoreCase("crown")) {
                 if (args[0].equalsIgnoreCase("claim")) {
-                    CrownClaimCommand crownClaimCommand = new CrownClaimCommand(conn);
+                    CrownClaimCommand crownClaimCommand = new CrownClaimCommand();
                     crownClaimCommand.execute(executor);
                     return true;
                 }
             } else if (cmd.equalsIgnoreCase("reinforce")) {
                 String reinforceTarget = args.length > 0 ? args[0] : null;
 
-                ReinforceCommand reinforceCommand = new ReinforceCommand(conn);
+                ReinforceCommand reinforceCommand = new ReinforceCommand();
                 reinforceCommand.execute(executor, reinforceTarget);
                 return true;
             }

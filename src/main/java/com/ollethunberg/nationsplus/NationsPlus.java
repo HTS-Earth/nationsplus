@@ -4,6 +4,8 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.postgresql.Driver;
 
+import com.ollethunberg.nationsplus.lib.SQLHelper;
+
 import java.sql.*;
 
 public final class NationsPlus extends JavaPlugin {
@@ -26,6 +28,7 @@ public final class NationsPlus extends JavaPlugin {
                             + config.getString("database.database") + "?stringtype=unspecified",
                     config.getString("database.username"), config.getString("database.password"));
             databaseManager = new DatabaseManager(connection);
+            SQLHelper.conn = connection;
             getLogger().info(connection.toString() + " connected to DB successfully!");
             // Check if database structure exists.
             if (!getConfig().getBoolean("database-created")) {
@@ -38,7 +41,7 @@ public final class NationsPlus extends JavaPlugin {
             // Register command handler
             commandHandler = new CommandHandler(connection);
             // Register events listeners that needs a SQL connection
-            getServer().getPluginManager().registerEvents(new Events(connection), this);
+            getServer().getPluginManager().registerEvents(new Events(), this);
 
             // Register commands
             getCommand("nationsplus").setExecutor(commandHandler);
@@ -58,11 +61,9 @@ public final class NationsPlus extends JavaPlugin {
     public void onDisable() {
         // Plugin shutdown logic
         getLogger().info("Nations plus disabled");
-        try {
-            connection.close();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+
+        // Close SQL connection
+        SQLHelper.closeConnection();
     }
 
     public void loadConfig() {

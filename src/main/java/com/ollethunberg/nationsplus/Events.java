@@ -1,5 +1,9 @@
 package com.ollethunberg.nationsplus;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,22 +21,13 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
+import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 public class Events implements Listener {
 
-    private SQLHelper sqlHelper;
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     private Configuration config = plugin.getConfig();
-    static HashMap<String, String> prefixCache = new HashMap<String, String>();
-
-    public Events(Connection _connection) {
-
-        sqlHelper = new SQLHelper(_connection);
-    }
+    public static HashMap<String, String> prefixCache = new HashMap<String, String>();
 
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
@@ -41,7 +36,7 @@ public class Events implements Listener {
 
             // Check if they are in the database.
             String isPlayerInDatabaseSQL = "SELECT EXISTS ( SELECT FROM player WHERE uid = ? );";
-            ResultSet rs = sqlHelper.query(isPlayerInDatabaseSQL, event.getPlayer().getUniqueId().toString());
+            ResultSet rs = SQLHelper.query(isPlayerInDatabaseSQL, event.getPlayer().getUniqueId().toString());
 
             rs.next();
 
@@ -49,14 +44,14 @@ public class Events implements Listener {
                 plugin.getLogger().info("New player joined!");
                 // Insert into database
                 String insertNewPlayerSQL = "INSERT INTO player(uid, last_login, player_name, kills, deaths) VALUES (?, CURRENT_TIMESTAMP, ?, 0,0);";
-                sqlHelper.update(insertNewPlayerSQL, event.getPlayer().getUniqueId().toString(),
+                SQLHelper.update(insertNewPlayerSQL, event.getPlayer().getUniqueId().toString(),
                         event.getPlayer().getName());
                 // Teleport the player to the spawn
             } else {
                 plugin.getLogger().info("Player does exist in the database!");
                 // Check if the player has a ban on them on the player_bans table
                 String playerBannedUntil = "SELECT banned_date + (banned_minutes * interval '1 minute') as banned_until, player_id FROM player_bans WHERE player_id = ? order by banned_date DESC;";
-                ResultSet rsPlayerBannedUntil = sqlHelper.query(playerBannedUntil,
+                ResultSet rsPlayerBannedUntil = SQLHelper.query(playerBannedUntil,
                         event.getPlayer().getUniqueId().toString());
                 rsPlayerBannedUntil.next();
                 /*
@@ -73,11 +68,11 @@ public class Events implements Listener {
                  * }
                  */
                 String updatePlayerLastLoginSQL = "UPDATE player SET last_login=CURRENT_TIMESTAMP, player_name=? where uid = ?";
-                sqlHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
+                SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
                         event.getPlayer().getUniqueId().toString());
                 // Update our prefix cache with the prefix of the nation that the player is in.
                 String getPlayerNationSQL = "SELECT n.prefix FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
-                ResultSet rsPlayerNation = sqlHelper.query(getPlayerNationSQL,
+                ResultSet rsPlayerNation = SQLHelper.query(getPlayerNationSQL,
                         event.getPlayer().getUniqueId().toString());
                 if (rsPlayerNation.next()) {
                     prefixCache.put(event.getPlayer().getUniqueId().toString(), rsPlayerNation.getString("prefix"));
@@ -114,56 +109,72 @@ public class Events implements Listener {
     public void onBlockBreak(final BlockBreakEvent event) {
         if (event.getBlock().getType() == Material.AIR)
             return;
-        // Check if there is a reinforcement on that block
-        String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-        String block_id = event.getBlock().getLocation().getBlockX() + "," + event.getBlock().getLocation().getBlockY()
-                + "," + event.getBlock().getLocation().getBlockZ();
-        try (ResultSet rs = sqlHelper.query(getReinforcementSQL, block_id,
-                event.getBlock().getLocation().getWorld().getName())) {
-            if (rs.next()) {
-                // Check if the player is the owner of the reinforcement
-                if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
-                        && rs.getString("reinforcement_mode").equals("PRIVATE")) {
-                    // Remove the reinforcement
-                    String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                    sqlHelper.update(removeReinforcementSQL, block_id,
-                            event.getBlock().getLocation().getWorld().getName());
-                    return;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 
-                }
-                int newHealth = rs.getInt("health") - 1;
-                if (newHealth > 0) {
-                    event.setCancelled(true);
-                    // Instanstiate particles at the blocks position
-                    event.getBlock().getWorld().spawnParticle(org.bukkit.Particle.HEART,
-                            event.getBlock().getLocation(), 3, 0, 0, 0);
-                    // Update the health of the block reinforcement async
-                    String updateReinforcementHealthSQL = "UPDATE block_reinforcement SET health = health - 1 WHERE block_id = ? AND world = ?;";
-                    sqlHelper.updateAsync(updateReinforcementHealthSQL, new SQLHelper.UpdateCallback() {
-                        @Override
-                        public void onQueryDone() throws SQLException {
-                            // If the reinforced blocks health is dividable with 5, tell the player that
-                            // are on the way to bream the block
-                            if (newHealth % 5 == 0) {
-                                event.getPlayer()
-                                        .sendMessage("§aYou are on the way to break the block! It has " + newHealth
-                                                + " health left!");
-                            }
+            @Override
+            public void run() {
+                // Check if there is a reinforcement on that block
+                String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                String block_id = event.getBlock().getLocation().getBlockX() + ","
+                        + event.getBlock().getLocation().getBlockY()
+                        + "," + event.getBlock().getLocation().getBlockZ();
+                try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
+                        event.getBlock().getLocation().getWorld().getName())) {
+                    if (rs.next()) {
+                        // Check if the player is the owner of the reinforcement
+                        if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
+                                && rs.getString("reinforcement_mode").equals("PRIVATE")) {
+                            // Remove the reinforcement
+                            String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                            SQLHelper.update(removeReinforcementSQL, block_id,
+                                    event.getBlock().getLocation().getWorld().getName());
+                            return;
+
                         }
-                    }, block_id,
-                            event.getBlock().getLocation().getWorld().getName());
-                } else {
-                    // If the block is broken, remove the reinforcement from the database
-                    String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                    sqlHelper.updateAsync(removeReinforcementSQL, () -> {
-                    }, block_id,
-                            event.getBlock().getLocation().getWorld().getName());
+                        int newHealth = rs.getInt("health") - 1;
+                        if (newHealth > 0) {
+                            event.setCancelled(true);
+                            Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+                                @Override
+                                public void run() {
+                                    // Instanstiate particles at the blocks position
+                                    event.getBlock().getWorld().spawnParticle(org.bukkit.Particle.HEART,
+                                            event.getBlock().getLocation(), 3, 0, 0, 0);
+                                    // Update the health of the block reinforcement async
+                                    String updateReinforcementHealthSQL = "UPDATE block_reinforcement SET health = health - 1 WHERE block_id = ? AND world = ?;";
+                                    try {
+                                        SQLHelper.update(updateReinforcementHealthSQL, block_id,
+                                                event.getBlock().getLocation().getWorld().getName());
+                                    } catch (SQLException e) {
+                                        event.getPlayer()
+                                                .sendMessage("§cSomething went wrong, please contact an admin!");
+                                        e.printStackTrace();
+                                    }
+                                    if (newHealth % 5 == 0) {
+                                        event.getPlayer()
+                                                .sendMessage(
+                                                        "§aYou are on the way to break the block! It has " + newHealth
+                                                                + " health left!");
+                                    }
+                                }
+                            });
+
+                        } else {
+                            // If the block is broken, remove the reinforcement from the database
+                            String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                            SQLHelper.update(removeReinforcementSQL, block_id,
+                                    event.getBlock().getLocation().getWorld().getName());
+                        }
+
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
                 }
 
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+        });
+
     }
 
     // New Block reinforcement eventhandler
@@ -199,7 +210,7 @@ public class Events implements Listener {
                 String getReinforcementSQL = "SELECT r.health,p.player_name, r.nation, r.reinforcement_mode  FROM block_reinforcement as r left join player as p on r.player_id = p.uid WHERE r.block_id = ? AND r.world = ?;";
                 String block_id = block.getLocation().getBlockX() + "," + block.getLocation().getBlockY() + ","
                         + block.getLocation().getBlockZ();
-                try (ResultSet rs = sqlHelper.query(getReinforcementSQL, block_id,
+                try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
                         block.getLocation().getWorld().getName())) {
                     if (rs.next()) {
                         boolean isReinforcedByNation = (rs.getString("reinforcement_mode")).equals("NATION");
@@ -236,11 +247,11 @@ public class Events implements Listener {
             @Override
             public void run() {
                 try {
-                    ResultSet rs = sqlHelper.query(getPlayerInfoSQL, p.getUniqueId().toString());
+                    ResultSet rs = SQLHelper.query(getPlayerInfoSQL, p.getUniqueId().toString());
                     if (rs.next()) {
                         // Check if block is already reinforced
                         String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                        ResultSet rsReinforcement = sqlHelper.query(getReinforcementSQL, block_id,
+                        ResultSet rsReinforcement = SQLHelper.query(getReinforcementSQL, block_id,
                                 blockLocation.getWorld().getName());
                         if (rsReinforcement.next()) {
                             // If the block is already reinforced, tell the player that
@@ -255,7 +266,7 @@ public class Events implements Listener {
                         // Insert the information to the database async
                         String insertReinforcementSQL = "INSERT INTO block_reinforcement (block_id, world, health, nation, player_id, block_type, reinforcement_type, reinforcement_mode) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
 
-                        sqlHelper.update(insertReinforcementSQL, block_id, event.getPlayer().getWorld().getName(),
+                        SQLHelper.update(insertReinforcementSQL, block_id, event.getPlayer().getWorld().getName(),
                                 health, nation, uid,
                                 block.getType().toString(),
                                 itemInHand.getType().name(), reinforcement_mode);
@@ -290,7 +301,7 @@ public class Events implements Listener {
         for (Block block : event.blockList()) {
             String block_id = block.getX() + "," + block.getY() + "," + block.getZ();
             String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-            try (ResultSet rs = sqlHelper.query(getReinforcementSQL, block_id,
+            try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
                     block.getWorld().getName())) {
                 if (rs.next()) {
 
@@ -303,28 +314,20 @@ public class Events implements Listener {
                             + block.getType().getHardness());
                     if (newHealth <= 0) {
                         String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                        sqlHelper.updateAsync(removeReinforcementSQL, () -> {
-                        }, block_id,
+                        SQLHelper.update(removeReinforcementSQL, block_id,
                                 block.getWorld().getName());
                     } else {
                         // Update the health of the block reinforcement async
                         String updateReinforcementHealthSQL = "UPDATE block_reinforcement SET health = ? WHERE block_id = ? AND world = ?;";
                         // Remove the block from the event.blockList, so it doesn't get destroyed
                         event.blockList().remove(block);
-                        sqlHelper.updateAsync(updateReinforcementHealthSQL, new SQLHelper.UpdateCallback() {
-                            @Override
-                            public void onQueryDone() throws SQLException {
-                                // If the reinforced blocks health is dividable with 5, tell the player that
-                                // are on the way to break the block
-                                if (newHealth % 5 == 0) {
-                                    event.getEntity()
-                                            .sendMessage("§aYou are on the way to break the block! It has " + newHealth
-                                                    + " health left!");
-                                }
-
-                            }
-                        }, newHealth, block_id,
+                        SQLHelper.update(updateReinforcementHealthSQL, newHealth, block_id,
                                 block.getWorld().getName());
+                        if (newHealth % 5 == 0) {
+                            event.getEntity()
+                                    .sendMessage("§aYou are on the way to break the block! It has " + newHealth
+                                            + " health left!");
+                        }
 
                     }
 

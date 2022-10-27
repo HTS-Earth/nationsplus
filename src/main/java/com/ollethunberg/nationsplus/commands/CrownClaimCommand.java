@@ -1,22 +1,20 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-public class CrownClaimCommand extends DatabaseInteractor {
-    // Use databaseInteractor to get the connection to the database.
-    public CrownClaimCommand(Connection _connection) {
-        super(_connection);
-    }
+import com.ollethunberg.nationsplus.lib.SQLHelper;
+
+public class CrownClaimCommand {
 
     public static final ItemStack crown(String nation) {
         ItemStack crown = new ItemStack(Material.CHAINMAIL_HELMET, 1);
@@ -51,43 +49,43 @@ public class CrownClaimCommand extends DatabaseInteractor {
             // Check if the player is in a nation
             String isInNationSQLString = "SELECT nation FROM player WHERE uid = ?";
             try {
-                ResultSet rs = sqlHelper.query(isInNationSQLString, p.getUniqueId().toString());
+                ResultSet rs = SQLHelper.query(isInNationSQLString, p.getUniqueId().toString());
                 // Check if the player is in the nation
                 rs.next();
                 // if the Player is part of the nation, the claim the crown and set the king_id
                 // to the players uid
                 if (rs.getString("nation") != null && rs.getString("nation").equals(nationName)) {
                     String claimCrownSQLString = "UPDATE nation SET king_id = ? WHERE name = ?";
-                    sqlHelper.update(claimCrownSQLString, p.getUniqueId().toString(), rs.getString("nation"));
+                    SQLHelper.update(claimCrownSQLString, p.getUniqueId().toString(), rs.getString("nation"));
 
                     p.sendMessage("§aYou have claimed the crown!");
                 } else {
                     // See if there is a nation with the nation name
                     String getNationSQLString = "SELECT name FROM nation WHERE name = ?";
-                    ResultSet nationRs = sqlHelper.query(getNationSQLString, nationName);
+                    ResultSet nationRs = SQLHelper.query(getNationSQLString, nationName);
                     if (nationRs.next()) {
 
                         String nation = nationRs.getString("name");
                         // Set the nation king_id to be null
                         String unclaimCrownSQLString = "UPDATE nation SET king_id = null WHERE name = ?";
-                        sqlHelper.update(unclaimCrownSQLString, nation);
+                        SQLHelper.update(unclaimCrownSQLString, nation);
                         // Announce that the nation has fallen
 
                         // Make all the players that belonged to the nation nationless
                         String makeNationlessSQLString = "UPDATE player SET nation = null WHERE nation = ?";
-                        sqlHelper.update(makeNationlessSQLString, nation);
+                        SQLHelper.update(makeNationlessSQLString, nation);
                         // Remove the relationships of the nation
                         String removeRelationshipsSQLString = "DELETE FROM nation_relations WHERE nation_one = ? or nation_second = ?;";
-                        sqlHelper.update(removeRelationshipsSQLString, nation, nation);
+                        SQLHelper.update(removeRelationshipsSQLString, nation, nation);
                         // Remove the nation
                         String removeNationSQLString = "DELETE FROM nation WHERE name = ?";
-                        sqlHelper.update(removeNationSQLString, nation);
+                        SQLHelper.update(removeNationSQLString, nation);
                         // Remove the crown from the players main hand
                         p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
 
-                        plugin.getServer()
+                        Bukkit.getServer()
                                 .broadcastMessage("§c§lThe nation " + nation + " has fallen!");
-                        plugin.getServer().broadcastMessage("§aAll its members are not nationless");
+                        Bukkit.getServer().broadcastMessage("§aAll its members are not nationless");
                     } else {
                         p.sendMessage("§c§lThere is no nation that belongs to this crown!");
                     }

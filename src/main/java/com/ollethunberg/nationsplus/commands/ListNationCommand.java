@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
