@@ -40,79 +40,86 @@ public class CommandHandler implements CommandExecutor {
             String cmd = command.getName();
             Player executor = (Player) sender;
             plugin.getLogger().info(cmd);
-            // Player only commands
-            if (cmd.equalsIgnoreCase("nation")) {
-                // Check what arguments there are
-                // if there are any arguments
-                if (args.length == 0) {
-                    // Send help message using the HelpCommand class
-                    HelpCommand help = new HelpCommand();
-                    help.execute(executor, args);
-                    return true;
-                }
 
-                String subCommand = args[0];
-                switch (subCommand) {
-                    // Check for "create" argument
-                    case "create": {
-                        if (!executor.hasPermission("nationsplus.create"))
+            try {
+
+                // Player only commands
+                if (cmd.equalsIgnoreCase("nation")) {
+                    // Check what arguments there are
+                    // if there are any arguments
+                    if (args.length == 0) {
+                        // Send help message using the HelpCommand class
+                        HelpCommand help = new HelpCommand();
+                        help.execute(executor, args);
+                        return true;
+                    }
+
+                    String subCommand = args[0];
+                    switch (subCommand) {
+                        // Check for "create" argument
+                        case "create": {
+                            if (!executor.hasPermission("nationsplus.create"))
+                                return true;
+                            // Create the nation
+                            plugin.getLogger().info("Creating nation!");
+                            // Execute the create nation command
+                            CreateNationCommand createNationCommand = new CreateNationCommand(conn);
+                            createNationCommand.execute(args[1], args[2], executor);
                             return true;
-                        // Create the nation
-                        plugin.getLogger().info("Creating nation!");
-                        // Execute the create nation command
-                        CreateNationCommand createNationCommand = new CreateNationCommand(conn);
-                        createNationCommand.execute(args[1], args[2], executor);
-                        return true;
+                        }
+                        case "list": {
+                            // Execute the list nation command
+                            ListNationCommand listNationCommand = new ListNationCommand(conn);
+                            listNationCommand.execute(executor);
+                            return true;
+                        }
+                        case "info": {
+                            // Execute the info nation command
+                            InfoNationCommand infoNationCommand = new InfoNationCommand(conn);
+                            infoNationCommand.execute(executor, args[1]);
+                            return true;
+                        }
+                        case "join": {
+                            // Execute the join nation command
+                            JoinNationCommand joinNationCommand = new JoinNationCommand();
+                            joinNationCommand.execute(executor, args[1]);
+                            return true;
+                        }
+                        case "status": {
+                            NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands();
+                            nationRelationshipCommands.executeStatus(executor);
+                            return true;
+                        }
+                        case "tax": {
+                            // Execute the tax nation command
+                            TaxCommand taxCommand = new TaxCommand();
+                            taxCommand.execute(executor, args[1]);
+                            return true;
+                        }
                     }
-                    case "list": {
-                        // Execute the list nation command
-                        ListNationCommand listNationCommand = new ListNationCommand(conn);
-                        listNationCommand.execute(executor);
-                        return true;
-                    }
-                    case "info": {
-                        // Execute the info nation command
-                        InfoNationCommand infoNationCommand = new InfoNationCommand(conn);
-                        infoNationCommand.execute(executor, args[1]);
-                        return true;
-                    }
-                    case "join": {
-                        // Execute the join nation command
-                        JoinNationCommand joinNationCommand = new JoinNationCommand();
-                        joinNationCommand.execute(executor, args[1]);
-                        return true;
-                    }
-                    case "status": {
+                    if (NationRelationshipCommands.isStatusValid(subCommand)) {
+                        // Execute relationship command
                         NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands();
-                        nationRelationshipCommands.executeStatus(executor);
+                        nationRelationshipCommands.execute(executor, args[1], args[0]);
                         return true;
                     }
-                    case "tax": {
-                        // Execute the tax nation command
-                        TaxCommand taxCommand = new TaxCommand();
-                        taxCommand.execute(executor, args[1]);
+
+                } else if (cmd.equalsIgnoreCase("crown")) {
+                    if (args[0].equalsIgnoreCase("claim")) {
+                        CrownClaimCommand crownClaimCommand = new CrownClaimCommand();
+                        crownClaimCommand.execute(executor);
                         return true;
                     }
-                }
-                if (NationRelationshipCommands.isStatusValid(subCommand)) {
-                    // Execute relationship command
-                    NationRelationshipCommands nationRelationshipCommands = new NationRelationshipCommands();
-                    nationRelationshipCommands.execute(executor, args[1], args[0]);
+                } else if (cmd.equalsIgnoreCase("reinforce")) {
+                    String reinforceTarget = args.length > 0 ? args[0] : null;
+
+                    ReinforceCommand reinforceCommand = new ReinforceCommand();
+                    reinforceCommand.execute(executor, reinforceTarget);
                     return true;
                 }
-
-            } else if (cmd.equalsIgnoreCase("crown")) {
-                if (args[0].equalsIgnoreCase("claim")) {
-                    CrownClaimCommand crownClaimCommand = new CrownClaimCommand();
-                    crownClaimCommand.execute(executor);
-                    return true;
-                }
-            } else if (cmd.equalsIgnoreCase("reinforce")) {
-                String reinforceTarget = args.length > 0 ? args[0] : null;
-
-                ReinforceCommand reinforceCommand = new ReinforceCommand();
-                reinforceCommand.execute(executor, reinforceTarget);
-                return true;
+            } catch (Exception e) {
+                executor.sendMessage("§r[§4§lERROR§r]§c " + e.getMessage());
+                e.printStackTrace();
             }
         }
         return true;
