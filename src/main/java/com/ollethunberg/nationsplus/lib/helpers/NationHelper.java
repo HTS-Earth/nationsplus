@@ -22,9 +22,8 @@ public class NationHelper extends SQLHelper {
 
     public Nation serializeNation(ResultSet rs) throws SQLException {
         Nation nation = (Nation) serializeDBNation(rs);
-
+        System.out.println(nation);
         nation.king_name = rs.getString("king_name");
-        nation.successor_name = rs.getString("successor_name");
         nation.membersCount = rs.getInt("membersCount");
 
         return nation;

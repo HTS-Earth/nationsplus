@@ -20,10 +20,12 @@ public class TaxCommand {
             throw new Exception("You are not in a nation");
 
         Nation nation = nationHelper.getNation(p.nation);
-        if (nation.king_id != p.uid)
+        if (!nation.king_id.equals(p.uid))
             throw new Exception("You are not the king of your nation");
 
         nationHelper.setTax(p.nation, taxFloat);
+
+        player.sendMessage("§aTax set to " + taxFloat + "%");
 
     }
 }
