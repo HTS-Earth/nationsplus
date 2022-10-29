@@ -109,71 +109,64 @@ public class Events implements Listener {
     public void onBlockBreak(final BlockBreakEvent event) {
         if (event.getBlock().getType() == Material.AIR)
             return;
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
 
-            @Override
-            public void run() {
-                // Check if there is a reinforcement on that block
-                String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                String block_id = event.getBlock().getLocation().getBlockX() + ","
-                        + event.getBlock().getLocation().getBlockY()
-                        + "," + event.getBlock().getLocation().getBlockZ();
-                try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
-                        event.getBlock().getLocation().getWorld().getName())) {
-                    if (rs.next()) {
-                        // Check if the player is the owner of the reinforcement
-                        if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
-                                && rs.getString("reinforcement_mode").equals("PRIVATE")) {
-                            // Remove the reinforcement
-                            String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                            SQLHelper.update(removeReinforcementSQL, block_id,
-                                    event.getBlock().getLocation().getWorld().getName());
-                            return;
+        // Check if there is a reinforcement on that block
+        String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+        String block_id = event.getBlock().getLocation().getBlockX() + ","
+                + event.getBlock().getLocation().getBlockY()
+                + "," + event.getBlock().getLocation().getBlockZ();
+        try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
+                event.getBlock().getLocation().getWorld().getName())) {
+            if (rs.next()) {
+                // Check if the player is the owner of the reinforcement
+                if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
+                        && rs.getString("reinforcement_mode").equals("PRIVATE")) {
+                    // Remove the reinforcement
+                    String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                    SQLHelper.update(removeReinforcementSQL, block_id,
+                            event.getBlock().getLocation().getWorld().getName());
+                    return;
 
+                }
+                int newHealth = rs.getInt("health") - 1;
+                if (newHealth > 0) {
+                    event.setCancelled(true);
+                    Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
+                        @Override
+                        public void run() {
+                            // Instanstiate particles at the blocks position
+                            event.getBlock().getWorld().spawnParticle(org.bukkit.Particle.HEART,
+                                    event.getBlock().getLocation(), 3, 0, 0, 0);
+                            // Update the health of the block reinforcement async
+                            String updateReinforcementHealthSQL = "UPDATE block_reinforcement SET health = health - 1 WHERE block_id = ? AND world = ?;";
+                            try {
+                                SQLHelper.update(updateReinforcementHealthSQL, block_id,
+                                        event.getBlock().getLocation().getWorld().getName());
+                            } catch (SQLException e) {
+                                event.getPlayer()
+                                        .sendMessage("§cSomething went wrong, please contact an admin!");
+                                e.printStackTrace();
+                            }
+                            if (newHealth % 5 == 0) {
+                                event.getPlayer()
+                                        .sendMessage(
+                                                "§aYou are on the way to break the block! It has " + newHealth
+                                                        + " health left!");
+                            }
                         }
-                        int newHealth = rs.getInt("health") - 1;
-                        if (newHealth > 0) {
-                            event.setCancelled(true);
-                            Bukkit.getScheduler().runTaskAsynchronously(plugin, new Runnable() {
-                                @Override
-                                public void run() {
-                                    // Instanstiate particles at the blocks position
-                                    event.getBlock().getWorld().spawnParticle(org.bukkit.Particle.HEART,
-                                            event.getBlock().getLocation(), 3, 0, 0, 0);
-                                    // Update the health of the block reinforcement async
-                                    String updateReinforcementHealthSQL = "UPDATE block_reinforcement SET health = health - 1 WHERE block_id = ? AND world = ?;";
-                                    try {
-                                        SQLHelper.update(updateReinforcementHealthSQL, block_id,
-                                                event.getBlock().getLocation().getWorld().getName());
-                                    } catch (SQLException e) {
-                                        event.getPlayer()
-                                                .sendMessage("§cSomething went wrong, please contact an admin!");
-                                        e.printStackTrace();
-                                    }
-                                    if (newHealth % 5 == 0) {
-                                        event.getPlayer()
-                                                .sendMessage(
-                                                        "§aYou are on the way to break the block! It has " + newHealth
-                                                                + " health left!");
-                                    }
-                                }
-                            });
+                    });
 
-                        } else {
-                            // If the block is broken, remove the reinforcement from the database
-                            String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
-                            SQLHelper.update(removeReinforcementSQL, block_id,
-                                    event.getBlock().getLocation().getWorld().getName());
-                        }
-
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
+                } else {
+                    // If the block is broken, remove the reinforcement from the database
+                    String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
+                    SQLHelper.update(removeReinforcementSQL, block_id,
+                            event.getBlock().getLocation().getWorld().getName());
                 }
 
             }
-
-        });
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
 
     }
 
