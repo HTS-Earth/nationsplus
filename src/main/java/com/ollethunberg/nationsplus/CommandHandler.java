@@ -106,6 +106,9 @@ public class CommandHandler implements CommandExecutor {
                     reinforceCommand.execute(executor, reinforceTarget);
                     return true;
                 }
+            } catch (ArrayIndexOutOfBoundsException e) {
+                executor.sendMessage("§r[§4§lERROR§r]§c You are missing arguments!");
+                return true;
             } catch (Exception e) {
                 executor.sendMessage("§r[§4§lERROR§r]§c " + e.getMessage());
                 e.printStackTrace();
