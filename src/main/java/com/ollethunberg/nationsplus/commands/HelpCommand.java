@@ -9,7 +9,7 @@ public class HelpCommand {
     public static final Map<String, String> commands = new HashMap<String, String>() {
         {
             put("/n create <name> <prefix>", "§aCreates a new nation");
-            put("/n tax <percentage>", "§aSets the tax of the nation");
+            put("/n tax <income | transfer | market> <percentage>", "§aSets the tax of the nation");
             put("/n war <nation name>", "§aDeclares wars on another nation");
             put("/n neutral <nation name>", "§aDeclares neutrality to another nation");
             put("/n peace <nation name>", "§aDeclares peace to another nation");

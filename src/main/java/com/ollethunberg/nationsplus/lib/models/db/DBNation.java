@@ -8,7 +8,9 @@ public class DBNation {
     public String created_date;
     public int kills = 0;
     public float balance = 0;
-    public int tax;
+    public int income_tax;
+    public int transfer_tax;
+    public int market_tax;
     public int x = 0;
     public int y = 0;
     public int z = 0;

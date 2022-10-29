@@ -11,7 +11,7 @@ public class TaxCommand {
     PlayerHelper playerHelper = new PlayerHelper();
     NationHelper nationHelper = new NationHelper();
 
-    public void execute(Player player, String tax) throws Exception {
+    public void execute(Player player, String taxType, String tax) throws Exception {
         float taxFloat = Float.parseFloat(tax);
         if (taxFloat < 0 || taxFloat > 100)
             throw new Exception("Tax must be between 0 and 100");
@@ -23,7 +23,7 @@ public class TaxCommand {
         if (!nation.king_id.equals(p.uid))
             throw new Exception("You are not the king of your nation");
 
-        nationHelper.setTax(p.nation, taxFloat);
+        nationHelper.setTax(p.nation, taxType, taxFloat);
 
         player.sendMessage("§aTax set to " + taxFloat + "%");
 

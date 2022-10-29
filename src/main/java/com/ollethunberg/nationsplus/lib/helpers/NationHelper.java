@@ -41,8 +41,21 @@ public class NationHelper extends SQLHelper {
 
     }
 
-    public void setTax(String nationName, float tax) throws SQLException {
-        update("UPDATE nation SET tax=? WHERE name=?", tax, nationName);
+    public void setTax(String nationName, String taxType, float tax) throws SQLException {
+        switch (taxType) {
+            case "income":
+                update("UPDATE nation SET income_tax=? WHERE name=?", tax, nationName);
+                break;
+            case "transfer":
+                update("UPDATE nation SET transfer_tax=? WHERE name=?", tax, nationName);
+                break;
+            case "market":
+                update("UPDATE nation SET market_tax=? WHERE name=?", tax, nationName);
+                break;
+            default:
+                throw new Error("Invalid tax type");
+        }
+
     }
 
     public void addMoney(String nationName, float amount) throws SQLException {

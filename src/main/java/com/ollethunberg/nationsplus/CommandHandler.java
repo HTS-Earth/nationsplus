@@ -79,7 +79,7 @@ public class CommandHandler implements CommandExecutor {
                             return true;
                         }
                         case "tax": {
-                            taxCommand.execute(executor, args[1]);
+                            taxCommand.execute(executor, args[1], args[2]);
                             return true;
                         }
                         case "donate": {
