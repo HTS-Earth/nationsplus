@@ -12,7 +12,7 @@ import com.ollethunberg.nationsplus.commands.HelpCommand;
 import com.ollethunberg.nationsplus.commands.InfoNationCommand;
 import com.ollethunberg.nationsplus.commands.JoinNationCommand;
 import com.ollethunberg.nationsplus.commands.ListNationCommand;
-import com.ollethunberg.nationsplus.commands.NationDonateCommand;
+import com.ollethunberg.nationsplus.commands.NationMoneyCommands;
 import com.ollethunberg.nationsplus.commands.NationRelationshipCommands;
 import com.ollethunberg.nationsplus.commands.ReinforceCommand;
 import com.ollethunberg.nationsplus.commands.TaxCommand;
@@ -30,7 +30,7 @@ public class CommandHandler implements CommandExecutor {
     TaxCommand taxCommand = new TaxCommand();
     CrownClaimCommand crownClaimCommand = new CrownClaimCommand();
     ReinforceCommand reinforceCommand = new ReinforceCommand();
-    NationDonateCommand nationDonateCommand = new NationDonateCommand();
+    NationMoneyCommands nationMoneyCommands = new NationMoneyCommands();
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -83,7 +83,11 @@ public class CommandHandler implements CommandExecutor {
                             return true;
                         }
                         case "donate": {
-                            nationDonateCommand.execute(executor, Integer.parseInt(args[1]));
+                            nationMoneyCommands.donate(executor, Integer.parseInt(args[1]));
+                            return true;
+                        }
+                        case "withdraw": {
+                            nationMoneyCommands.withdraw(executor, Integer.parseInt(args[1]), args[2]);
                             return true;
                         }
                     }

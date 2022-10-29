@@ -19,6 +19,8 @@ public class HelpCommand {
             put("/n info <nation name>", "§aDisplays the info of a nation");
             put("/n join <nation name>", "§aJoin a nation! (You can't leave)");
             put("/n donate <amount>", "§aDonates the set amount to your nation's bank");
+            put("/n withdraw <amount> <receiver player name>",
+                    "§aWithdraw the amount from your nation's bank to the receiver");
         }
     };
 

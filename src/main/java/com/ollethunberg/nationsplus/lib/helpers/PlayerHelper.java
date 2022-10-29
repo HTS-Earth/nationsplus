@@ -37,4 +37,17 @@ public class PlayerHelper extends SQLHelper {
         return serializeDBPlayer(rs);
     }
 
+    public List<DBPlayer> getPlayersInNation(String nation) throws SQLException {
+        ResultSet rs = query("SELECT * from player where nation=?", nation);
+        return serializeDBPlayers(rs);
+    }
+
+    public DBPlayer getPlayerByName(String name) throws SQLException {
+        ResultSet rs = query("SELECT * from player where player_name=?", name);
+        if (!rs.next()) {
+            throw new Error("No player found");
+        }
+        return serializeDBPlayer(rs);
+    }
+
 }
