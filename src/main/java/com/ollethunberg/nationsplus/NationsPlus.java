@@ -7,12 +7,17 @@ import org.postgresql.Driver;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 import java.sql.*;
+import java.text.NumberFormat;
+import java.util.Locale;
 
 public final class NationsPlus extends JavaPlugin {
     public Connection connection;
     public DatabaseManager databaseManager;
     private CommandHandler commandHandler;
     public Configuration config;
+    private static Locale usa = new Locale("en", "US");
+
+    public static NumberFormat dollarFormat = NumberFormat.getCurrencyInstance(usa);
 
     @Override
     public void onEnable() {
@@ -39,7 +44,7 @@ public final class NationsPlus extends JavaPlugin {
                 getLogger().info("Database already set up. No need to import structure.");
             }
             // Register command handler
-            commandHandler = new CommandHandler(connection);
+            commandHandler = new CommandHandler();
             // Register events listeners that needs a SQL connection
             getServer().getPluginManager().registerEvents(new Events(), this);
 

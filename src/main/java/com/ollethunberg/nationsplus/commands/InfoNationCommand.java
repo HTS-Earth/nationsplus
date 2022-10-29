@@ -1,6 +1,5 @@
 package com.ollethunberg.nationsplus.commands;
 
-import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -9,10 +8,6 @@ import org.bukkit.entity.Player;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 public class InfoNationCommand {
-
-    public InfoNationCommand(Connection _connection) {
-
-    }
 
     public void execute(Player player, String nation) {
         try {

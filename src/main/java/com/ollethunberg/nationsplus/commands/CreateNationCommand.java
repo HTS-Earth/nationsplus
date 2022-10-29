@@ -1,7 +1,5 @@
 package com.ollethunberg.nationsplus.commands;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
 import org.bukkit.entity.Player;
@@ -9,23 +7,17 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import com.ollethunberg.nationsplus.NationsPlus;
+import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 public class CreateNationCommand {
-    Connection conn;
-    Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
 
-    public CreateNationCommand(Connection _connection) {
-        conn = _connection;
-    }
+    Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
 
     public void execute(String nationName, String prefix, Player king) {
         try {
             String insertNewNationSQL = "INSERT INTO nation(name, prefix, king_id, created_date, kills, balance) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0,0);";
-            PreparedStatement prepareInsertStatement = conn.prepareStatement(insertNewNationSQL);
-            prepareInsertStatement.setString(1, nationName);
-            prepareInsertStatement.setString(2, prefix);
-            prepareInsertStatement.setString(3, king.getUniqueId().toString());
-            prepareInsertStatement.executeUpdate();
+            SQLHelper.update(insertNewNationSQL, nationName, prefix, king.getUniqueId().toString());
+
             // Give a crown with the antion to the king
             ItemStack crown = CrownClaimCommand.crown(nationName);
             king.getInventory().addItem(crown);

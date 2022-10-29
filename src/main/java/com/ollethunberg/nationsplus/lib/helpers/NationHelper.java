@@ -44,4 +44,8 @@ public class NationHelper extends SQLHelper {
     public void setTax(String nationName, float tax) throws SQLException {
         update("UPDATE nation SET tax=? WHERE name=?", tax, nationName);
     }
+
+    public void addMoney(String nationName, float amount) throws SQLException {
+        update("UPDATE nation SET balance=balance+? WHERE name=?", amount, nationName);
+    }
 }
