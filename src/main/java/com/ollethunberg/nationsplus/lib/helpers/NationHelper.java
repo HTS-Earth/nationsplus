@@ -52,6 +52,9 @@ public class NationHelper extends SQLHelper {
             case "market":
                 update("UPDATE nation SET market_tax=? WHERE name=?", tax, nationName);
                 break;
+            case "vat":
+                update("UPDATE nation SET vat_tax=? WHERE name=?", tax, nationName);
+                break;
             default:
                 throw new Error("Invalid tax type");
         }

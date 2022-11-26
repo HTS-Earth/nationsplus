@@ -43,7 +43,7 @@ public class PlayerHelper extends SQLHelper {
     }
 
     public DBPlayer getPlayerByName(String name) throws SQLException {
-        ResultSet rs = query("SELECT * from player where player_name=?", name);
+        ResultSet rs = query("SELECT * from player where LOWER(player_name)=LOWER(?)", name);
         if (!rs.next()) {
             throw new Error("No player found");
         }
