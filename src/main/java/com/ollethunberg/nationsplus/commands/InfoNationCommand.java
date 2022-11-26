@@ -30,6 +30,7 @@ public class InfoNationCommand {
             player.sendMessage("§aIncome tax§r: " + rsNation.getString("income_tax") + "%");
             player.sendMessage("§aTransfer tax§r: " + rsNation.getString("transfer_tax") + "%");
             player.sendMessage("§aMarket tax§r: " + rsNation.getString("market_tax") + "%");
+            player.sendMessage("§aVAT tax§r: " + rsNation.getString("vat_tax") + "%");
             player.sendMessage("§6King§r: " + rsNation.getString("king"));
             player.sendMessage("§eSuccessor§r: " + rsNation.getString("successor_id"));
             player.sendMessage("§eMembers§r: " + rsMemberCount.getString("count"));
