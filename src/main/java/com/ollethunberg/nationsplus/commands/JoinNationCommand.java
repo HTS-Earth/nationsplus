@@ -23,8 +23,8 @@ public class JoinNationCommand {
 
             String updatePlayerNationIdSQL = "UPDATE player SET nation = ? WHERE uid = ?";
             SQLHelper.update(updatePlayerNationIdSQL, nationName, player.getUniqueId().toString());
-            Events.prefixCache.remove(player.getUniqueId().toString());
-            Events.prefixCache.put(player.getUniqueId().toString(), rs.getString("prefix"));
+            Events.nationPrefixCache.remove(player.getUniqueId().toString());
+            Events.nationPrefixCache.put(player.getUniqueId().toString(), rs.getString("prefix"));
             String getNationCoordinatesSQL = "SELECT x, y, z FROM nation WHERE name = ?";
             ResultSet nationCoordinates = SQLHelper.query(getNationCoordinatesSQL, nationName);
             if (!nationCoordinates.next()) {

@@ -27,7 +27,8 @@ public class Events implements Listener {
 
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     private Configuration config = plugin.getConfig();
-    public static HashMap<String, String> prefixCache = new HashMap<String, String>();
+    public static HashMap<String, String> nationPrefixCache = new HashMap<String, String>();
+    public static HashMap<String, String> rankPrefixCache = new HashMap<String, String>();
 
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
@@ -71,11 +72,16 @@ public class Events implements Listener {
                 SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
                         event.getPlayer().getUniqueId().toString());
                 // Update our prefix cache with the prefix of the nation that the player is in.
-                String getPlayerNationSQL = "SELECT n.prefix FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
+                String getPlayerNationSQL = "SELECT n.prefix, p.rank FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
                 ResultSet rsPlayerNation = SQLHelper.query(getPlayerNationSQL,
                         event.getPlayer().getUniqueId().toString());
                 if (rsPlayerNation.next()) {
-                    prefixCache.put(event.getPlayer().getUniqueId().toString(), rsPlayerNation.getString("prefix"));
+
+                    if (rsPlayerNation.getString("rank").equals("vip")) {
+                        rankPrefixCache.put(event.getPlayer().getUniqueId().toString(), "§6[VIP§6]");
+                    }
+                    nationPrefixCache.put(event.getPlayer().getUniqueId().toString(),
+                            rsPlayerNation.getString("prefix"));
                 } else {
                     plugin.getLogger().info("Player is not in a nation!");
                     event.getPlayer().sendMessage("§aPlease join a nation!");
@@ -92,15 +98,19 @@ public class Events implements Listener {
     @EventHandler
     public void onPlayerQuit(final PlayerQuitEvent event) {
         // remove player from cache
-        prefixCache.remove(event.getPlayer().getUniqueId().toString());
+        nationPrefixCache.remove(event.getPlayer().getUniqueId().toString());
+        rankPrefixCache.remove(event.getPlayer().getUniqueId().toString());
     }
 
     @EventHandler
     public void onPlayerChat(final AsyncPlayerChatEvent e) {
         // Get preifix from the cache.
-        String prefix = prefixCache.get(e.getPlayer().getUniqueId().toString());
-        if (prefix != null) {
-            e.setFormat("§e[§r" + prefix + "§e]§r %s : %s");
+        String nationPrefix = nationPrefixCache.get(e.getPlayer().getUniqueId().toString());
+        String rankPrefix = rankPrefixCache.get(e.getPlayer().getUniqueId().toString());
+        if (nationPrefix != null && rankPrefix == null) {
+            e.setFormat("§e[§r" + nationPrefix + "§e]§r %s : %s");
+        } else if (nationPrefix != null && rankPrefix != null) {
+            e.setFormat("§e[§r" + nationPrefix + "§e]§r " + rankPrefix + "§r %s : %s");
         }
     }
 
