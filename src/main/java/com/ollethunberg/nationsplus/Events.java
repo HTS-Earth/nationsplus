@@ -11,17 +11,24 @@ import org.bukkit.block.Block;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
+import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 
 public class Events implements Listener {
 
@@ -29,7 +36,7 @@ public class Events implements Listener {
     private Configuration config = plugin.getConfig();
     public static HashMap<String, String> nationPrefixCache = new HashMap<String, String>();
     public static HashMap<String, String> rankPrefixCache = new HashMap<String, String>();
-
+    private PlayerHelper playerHelper = new PlayerHelper();
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
 
@@ -55,19 +62,7 @@ public class Events implements Listener {
                 ResultSet rsPlayerBannedUntil = SQLHelper.query(playerBannedUntil,
                         event.getPlayer().getUniqueId().toString());
                 rsPlayerBannedUntil.next();
-                /*
-                 * if (rsPlayerBannedUntil.getTimestamp("banned_until") != null) {
-                 * if (rsPlayerBannedUntil.getTimestamp("banned_until")
-                 * .after(new Timestamp(System.currentTimeMillis()))) {
-                 * plugin.getLogger().info("Player is banned!");
-                 * event.getPlayer().kickPlayer("§cYou are not able to join the server, ");
-                 * return;
-                 * }
-                 * } else {
-                 * // log that the player is not banned
-                 * plugin.getLogger().info("Player is not banned!");
-                 * }
-                 */
+
                 String updatePlayerLastLoginSQL = "UPDATE player SET last_login=CURRENT_TIMESTAMP, player_name=? where uid = ?";
                 SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
                         event.getPlayer().getUniqueId().toString());
@@ -91,6 +86,61 @@ public class Events implements Listener {
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
+        }
+
+    }
+
+    /* Event handler inventory move event */
+    @EventHandler
+    public void onInventoryClick(InventoryClickEvent event) {
+        // Cancel the event if the clicked item has "§8crown" in its lore
+        event.setCancelled(isCrownItem(event.getCurrentItem()));
+    }
+
+    @EventHandler
+    public void onPlayerDropItem(PlayerDropItemEvent event) {
+        // Cancel the event if the dropped item has "§8crown" in its lore
+        event.setCancelled(isCrownItem(event.getItemDrop().getItemStack()));
+    }
+
+    // Helper method to check if an item has "§8crown" in its lore
+    private boolean isCrownItem(ItemStack item) {
+        if (item != null && item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            return meta.hasLore() && meta.getLore().contains("§8crown");
+        }
+        return false;
+    }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onPlayerDeath(PlayerDeathEvent event) {
+        // Get the player who died
+        Player player = event.getEntity();
+
+        try {
+            // Check if the player was wearing a helmet with "§8crown" in its lore
+            if (isCrownItem(player.getInventory().getHelmet())) {
+                // check if the player is dead by a player
+                if (player.getKiller() instanceof Player) {
+                    // Get the player who killed the player
+                    Player killer = player.getKiller();
+
+                    // check which nation the killer belongs to
+                    DBPlayer killerDB = playerHelper.getPlayer(killer.getUniqueId().toString());
+                    DBPlayer victimDB = playerHelper.getPlayer(player.getUniqueId().toString());
+                    if(killerDB.nation.equals(victimDB.nation)) {
+                        // check if the killer is the same nation as the victim
+                        killer.sendMessage("§cYou can't kill your own nation!");
+                        
+                        return;
+                    }
+                    
+
+                }
+            }
+        } catch (SQLException e) {
+            // log error
+            plugin.getLogger().info("Error: " + e.getMessage());
         }
 
     }

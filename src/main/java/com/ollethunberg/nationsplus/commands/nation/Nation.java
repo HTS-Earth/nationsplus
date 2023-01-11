@@ -34,7 +34,7 @@ public class Nation extends WalletBalanceHelper {
 
         // Give a crown with the antion to the king
         ItemStack crown = Crown.crown(nationName);
-        king.getInventory().addItem(crown);
+        king.getInventory().setHelmet(crown);
 
         // Message the king that the nation was created
 
