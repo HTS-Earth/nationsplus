@@ -1,11 +1,11 @@
-package com.ollethunberg.nationsplus.commands;
+package com.ollethunberg.nationsplus.commands.nation.commands.help;
 
 import java.util.HashMap;
 import java.util.Map;
 
 import org.bukkit.command.CommandSender;
 
-public class HelpCommand {
+public class Help {
     public static final Map<String, String> commands = new HashMap<String, String>() {
         {
             put("/n create <name> <prefix>", "§aCreates a new nation");
@@ -24,7 +24,7 @@ public class HelpCommand {
         }
     };
 
-    public void execute(CommandSender sender, String[] args) {
+    public void help(CommandSender sender, String[] args) {
         try {
             if (args.length == 0) {
                 for (String command : commands.keySet()) {

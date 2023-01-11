@@ -4,20 +4,29 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.postgresql.Driver;
 
+import com.ollethunberg.nationsplus.commands.crown.CrownHandler;
+import com.ollethunberg.nationsplus.commands.nation.NationAutoComplete;
+import com.ollethunberg.nationsplus.commands.nation.NationHandler;
+import com.ollethunberg.nationsplus.commands.reinforce.ReinforceHandler;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 import java.sql.*;
 import java.text.NumberFormat;
 import java.util.Locale;
+import java.util.logging.Logger;
 
 public final class NationsPlus extends JavaPlugin {
     public Connection connection;
     public DatabaseManager databaseManager;
-    private CommandHandler commandHandler;
     public Configuration config;
+    public static final Logger LOGGER = Logger.getLogger("nationsplus-economy");
     private static Locale usa = new Locale("en", "US");
-
     public static NumberFormat dollarFormat = NumberFormat.getCurrencyInstance(usa);
+
+    /* CommandHandlers */
+    NationHandler nationHandler;
+    CrownHandler crownHandler;
+    ReinforceHandler reinforceHandler;
 
     @Override
     public void onEnable() {
@@ -43,22 +52,26 @@ public final class NationsPlus extends JavaPlugin {
             } else {
                 getLogger().info("Database already set up. No need to import structure.");
             }
-            // Register command handler
-            commandHandler = new CommandHandler();
+            // Register command handlers
+            nationHandler = new NationHandler();
+            crownHandler = new CrownHandler();
+            reinforceHandler = new ReinforceHandler();
+
             // Register events listeners that needs a SQL connection
             getServer().getPluginManager().registerEvents(new Events(), this);
 
             // Register commands
-            getCommand("nationsplus").setExecutor(commandHandler);
-            getCommand("nation").setExecutor(commandHandler);
-            getCommand("crown").setExecutor(commandHandler);
-            getCommand("reinforce").setExecutor(commandHandler);
+            getCommand("nationsplus").setExecutor(nationHandler);
+            getCommand("nation").setExecutor(nationHandler);
+            getCommand("crown").setExecutor(crownHandler);
+            getCommand("reinforce").setExecutor(reinforceHandler);
+
             getCommand("nation").setTabCompleter(new NationAutoComplete());
 
         } catch (SQLException e) {
             System.err.format("SQL State: %s\n%s", e.getSQLState(), e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
+            NationsPlus.LOGGER.warning(getName() + ": " + e.getMessage());
         }
     }
 

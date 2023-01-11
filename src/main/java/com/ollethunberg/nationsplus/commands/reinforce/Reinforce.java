@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus.commands;
+package com.ollethunberg.nationsplus.commands.reinforce;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -8,16 +8,22 @@ import org.bukkit.plugin.Plugin;
 
 import com.ollethunberg.nationsplus.NationsPlus;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.helpers.WalletBalanceHelper;
 
-public class ReinforceCommand {
-
+public class Reinforce extends WalletBalanceHelper {
     Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
 
-    public void execute(Player player, String reinforcementMode) {
+    private void setReinforcementMode(String reinforcementMode, Player player) throws SQLException {
+        SQLHelper.update("UPDATE player SET reinforcement_mode = ? WHERE uid = ?",
+                reinforcementMode, player.getUniqueId().toString());
+        player.sendMessage("§2Reinforcement mode set to " + reinforcementMode);
+    }
+
+    public void reinforce(Player player, String reinforcementType) throws SQLException {
 
         try {
             // check if reinforceTarget has a value
-            if (reinforcementMode == null) {
+            if (reinforcementType == null) {
                 // toggle reinforce mode
                 ResultSet currentTarget = SQLHelper.query("SELECT reinforcement_mode FROM player WHERE uid = ?",
                         player.getUniqueId().toString());
@@ -25,23 +31,19 @@ public class ReinforceCommand {
                     String newReinforcementMode = currentTarget.getString("reinforcement_mode").equals("NATION")
                             ? "PRIVATE"
                             : "NATION";
-                    SQLHelper.update("UPDATE player SET reinforcement_mode = ? WHERE uid = ?",
-                            newReinforcementMode, player.getUniqueId().toString());
-                    player.sendMessage("§2Reinforcement mode set to " + newReinforcementMode);
+                    setReinforcementMode(newReinforcementMode, player);
                 }
             } else {
-                String newReinforcementMode = reinforcementMode.toUpperCase();
+                reinforcementType = reinforcementType.toUpperCase();
                 // check if newReinforcementMode is "N" or "P" and set it to "NATION" or
                 // "PRIVATE"
-                if (newReinforcementMode.equals("N")) {
-                    newReinforcementMode = "NATION";
-                } else if (newReinforcementMode.equals("P")) {
-                    newReinforcementMode = "PRIVATE";
+                if (reinforcementType.equals("N")) {
+                    reinforcementType = "NATION";
+                } else if (reinforcementType.equals("P")) {
+                    reinforcementType = "PRIVATE";
                 }
-                if (newReinforcementMode.equals("PRIVATE") || newReinforcementMode.equals("NATION")) {
-                    SQLHelper.update("UPDATE player SET reinforcement_mode = ? WHERE uid = ?",
-                            newReinforcementMode, player.getUniqueId().toString());
-                    player.sendMessage("§2Reinforcement mode set to " + newReinforcementMode);
+                if (reinforcementType.equals("PRIVATE") || reinforcementType.equals("NATION")) {
+                    setReinforcementMode(reinforcementType, player);
                 } else {
                     player.sendMessage("§4Invalid reinforcement mode. Valid modes are: NATION, PRIVATE");
                 }

@@ -2,12 +2,21 @@ package com.ollethunberg.nationsplus.lib.helpers;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.models.Nation;
 import com.ollethunberg.nationsplus.lib.models.db.DBNation;
+import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 
 public class NationHelper extends SQLHelper {
+    PlayerHelper playerHelper = new PlayerHelper();
+
     public DBNation serializeDBNation(ResultSet rs) throws SQLException {
         DBNation nation = new Nation();
 
@@ -16,6 +25,9 @@ public class NationHelper extends SQLHelper {
         nation.successor_id = rs.getString("successor_id");
         nation.balance = rs.getFloat("balance");
         nation.kills = rs.getInt("kills");
+        nation.x = rs.getInt("x");
+        nation.y = rs.getInt("y");
+        nation.z = rs.getInt("z");
 
         return nation;
     }
@@ -41,6 +53,16 @@ public class NationHelper extends SQLHelper {
 
     }
 
+    public List<Nation> getNations() throws SQLException {
+        List<Nation> nations = new ArrayList<Nation>();
+        ResultSet rs = query(
+                "SELECT n.*, p.player_name as king_name, (select count(p.*)from player as p where p.nation = n.name) as \"membersCount\" from nation as n inner join player as p on p.uid=n.king_id");
+        while (rs.next()) {
+            nations.add(serializeNation(rs));
+        }
+        return nations;
+    }
+
     public void setTax(String nationName, String taxType, float tax) throws SQLException {
         switch (taxType) {
             case "income":
@@ -56,7 +78,7 @@ public class NationHelper extends SQLHelper {
                 update("UPDATE nation SET vat_tax=? WHERE name=?", tax, nationName);
                 break;
             default:
-                throw new Error("Invalid tax type");
+                throw new IllegalArgumentException("Valid tax types are income, transfer, market and vat");
         }
 
     }
@@ -64,4 +86,14 @@ public class NationHelper extends SQLHelper {
     public void addMoney(String nationName, float amount) throws SQLException {
         update("UPDATE nation SET balance=balance+? WHERE name=?", amount, nationName);
     }
+
+    public void notifyNationMembers(String nationName, String message) throws SQLException {
+        for (DBPlayer player : playerHelper.getPlayersInNation(nationName)) {
+            Player p = Bukkit.getServer().getPlayer(UUID.fromString(player.uid));
+            if (p != null) {
+                p.sendMessage(message);
+            }
+        }
+    }
+
 }

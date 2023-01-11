@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus.commands;
+package com.ollethunberg.nationsplus.commands.nation.commands.nationrelationship;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -11,7 +11,7 @@ import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 import net.md_5.bungee.api.ChatColor;
 
-public class NationRelationshipCommands {
+public class NationRelationship {
 
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     static String[] statusStrings = { "war", "peace", "ally", "neutral", "enemy", "peace_requested" };
@@ -44,7 +44,7 @@ public class NationRelationshipCommands {
         }
     }
 
-    public void executeStatus(Player player) {
+    public void listStatus(Player player) {
         // List all the statuses of the nations to the player
         try {
             ResultSet rs = SQLHelper.query("SELECT * FROM nation_relations ");
@@ -54,7 +54,7 @@ public class NationRelationshipCommands {
                 String status = rs.getString("status");
                 // Print it to user with colors
                 player.sendMessage(ChatColor.GREEN + nation1 + " §2§l→§r " + ChatColor.GREEN +
-                        nation2 + " " + ChatColor.GOLD + ": §r§l" + NationRelationshipCommands.statusWithColor(status));
+                        nation2 + " " + ChatColor.GOLD + ": §r§l" + NationRelationship.statusWithColor(status));
             }
         } catch (SQLException e) {
             // Print to the user that we could not get all the nation relationships
@@ -64,7 +64,7 @@ public class NationRelationshipCommands {
 
     }
 
-    public void execute(Player executor, String targetNation, String status) {
+    public void status(Player executor, String targetNation, String status) {
 
         try {
             // Find which nation the player belongs to

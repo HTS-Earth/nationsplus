@@ -1,4 +1,4 @@
-package com.ollethunberg.nationsplus;
+package com.ollethunberg.nationsplus.commands.nation;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -9,6 +9,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.util.StringUtil;
+
+import com.ollethunberg.nationsplus.commands.nation.commands.tax.TaxAutoComplete;
 
 public class NationAutoComplete implements TabCompleter {
     private static final String[] keywords = { "create", "tax", "war", "peace", "ally", "neutral", "enemy", "list",
@@ -26,8 +28,14 @@ public class NationAutoComplete implements TabCompleter {
                 StringUtil.copyPartialMatches(args[0], keyWordAsArrayList, completions);
                 Collections.sort(completions);
                 return completions;
-            } else
+            } else {
+                switch (args[0]) {
+                    case "tax":
+                        return new TaxAutoComplete().onTabComplete(sender, command, label, args);
+                }
                 return null;
+
+            }
         } catch (Exception e) {
             return null;
         }

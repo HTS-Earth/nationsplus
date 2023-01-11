@@ -31,7 +31,9 @@ public class SQLHelper {
             preparedStatement.setObject(i + 1, args[i]);
         }
         preparedStatement.executeQuery();
-        return preparedStatement.getResultSet();
+        ResultSet result = preparedStatement.getResultSet();
+        preparedStatement.close();
+        return result;
     }
 
     public static void update(String query, Object... args) throws SQLException {
@@ -40,6 +42,7 @@ public class SQLHelper {
             preparedStatement.setObject(i + 1, args[i]);
         }
         preparedStatement.executeUpdate();
+        preparedStatement.close();
     }
 
 }
