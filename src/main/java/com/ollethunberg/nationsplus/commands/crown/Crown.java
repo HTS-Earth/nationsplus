@@ -13,6 +13,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
+import com.ollethunberg.nationsplus.lib.exceptions.NationException;
 
 public class Crown extends SQLHelper {
     public static final ItemStack crown(String nation) {
@@ -60,7 +62,7 @@ public class Crown extends SQLHelper {
 
     }
 
-    public void claim(Player p) throws SQLException {
+    public void claim(Player p) throws SQLException, NationException, IllegalArgumentException {
         // Check if the player is holding an item with the tag "crown"
 
         if (p.getInventory().getItemInMainHand().hasItemMeta()
@@ -110,13 +112,13 @@ public class Crown extends SQLHelper {
                             .broadcastMessage("§c§lThe nation " + nation + " has fallen!");
                     Bukkit.getServer().broadcastMessage("§aAll its members are not nationless");
                 } else {
-                    p.sendMessage("§c§lThere is no nation that belongs to this crown!");
+                    throw new NationException(p, "There is no nation that belongs to this crown!");
                 }
 
             }
 
         } else {
-            p.sendMessage("§cYou are not holding a crown!");
+            throw new IllegalArgumentException(p, "You are not holding a crown!");
         }
     }
 }

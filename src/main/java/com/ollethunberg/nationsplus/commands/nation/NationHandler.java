@@ -9,7 +9,8 @@ import org.bukkit.entity.Player;
 
 import com.ollethunberg.nationsplus.NationsPlus;
 import com.ollethunberg.nationsplus.commands.nation.commands.nationrelationship.NationRelationship;
-import com.ollethunberg.nationsplus.lib.PermissionException;
+import com.ollethunberg.nationsplus.lib.exceptions.ExceptionBase;
+import com.ollethunberg.nationsplus.lib.exceptions.PermissionException;
 
 public class NationHandler implements CommandExecutor {
 
@@ -36,7 +37,7 @@ public class NationHandler implements CommandExecutor {
                     switch (action) {
                         case "create": {
                             if (!player.hasPermission("nationsplus.create")) {
-                                throw new PermissionException("You do not have permission to create a nation!");
+                                throw new PermissionException(player, "You do not have permission to create a nation!");
                             }
                             nation.create(args[1], args[2], player);
                             break;
@@ -79,20 +80,14 @@ public class NationHandler implements CommandExecutor {
                 } else
                     return true;
             } catch (SQLException e) {
-                player.sendMessage("§cThere was an error while executing the command!");
-                e.printStackTrace();
+                player.sendMessage(
+                        "§r[§4§lDATABASE-ERROR§r]§c A database error occured. Please contact an administrator.");
                 NationsPlus.LOGGER.warning(action + " " + e.getMessage());
                 return true;
-            } catch (PermissionException e) {
-                player.sendMessage("§r[§4§lPERMISSIONS-ERROR§r]§c " + e.getMessage());
-                return true;
-            } catch (IllegalArgumentException e) {
-                player.sendMessage("§r[§4§lINPUT-ERROR§r]§c " + e.getMessage());
-                return true;
-            } catch (Error | Exception e) {
-                player.sendMessage("§r[§4§lERROR§r]§c " + e.getMessage());
+            } catch (ExceptionBase e) {
                 return true;
             }
+
         } else {
             /* Console sent the command */
             sender.sendMessage("You must be a player to use this command!");

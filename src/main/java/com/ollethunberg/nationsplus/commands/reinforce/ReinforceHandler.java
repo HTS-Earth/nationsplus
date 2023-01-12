@@ -8,6 +8,7 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import com.ollethunberg.nationsplus.NationsPlus;
+import com.ollethunberg.nationsplus.lib.exceptions.ExceptionBase;
 
 public class ReinforceHandler implements CommandExecutor {
 
@@ -23,12 +24,12 @@ public class ReinforceHandler implements CommandExecutor {
             try {
                 reinforce.reinforce(player, action);
             } catch (SQLException e) {
-                player.sendMessage("§cThere was an error while executing the command!");
-                e.printStackTrace();
+                player.sendMessage(
+                        "§r[§4§lDATABASE-ERROR§r]§c A database error occured. Please contact an administrator.");
                 NationsPlus.LOGGER.warning(action + " " + e.getMessage());
                 return true;
-            } catch (Error | Exception e) {
-                player.sendMessage("§r[§4§lERROR§r]§c " + e.getMessage());
+            } catch (ExceptionBase e) {
+                NationsPlus.LOGGER.warning(action + " " + e.getMessage());
                 return true;
             }
         } else {

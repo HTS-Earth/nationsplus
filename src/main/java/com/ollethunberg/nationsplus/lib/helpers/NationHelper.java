@@ -13,6 +13,7 @@ import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.models.Nation;
 import com.ollethunberg.nationsplus.lib.models.db.DBNation;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
+import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
 
 public class NationHelper extends SQLHelper {
     PlayerHelper playerHelper = new PlayerHelper();
@@ -63,7 +64,8 @@ public class NationHelper extends SQLHelper {
         return nations;
     }
 
-    public void setTax(String nationName, String taxType, float tax) throws SQLException {
+    public void setTax(Player player, String nationName, String taxType, float tax)
+            throws SQLException, IllegalArgumentException {
         switch (taxType) {
             case "income":
                 update("UPDATE nation SET income_tax=? WHERE name=?", tax, nationName);
@@ -78,7 +80,7 @@ public class NationHelper extends SQLHelper {
                 update("UPDATE nation SET vat_tax=? WHERE name=?", tax, nationName);
                 break;
             default:
-                throw new IllegalArgumentException("Valid tax types are income, transfer, market and vat");
+                throw new IllegalArgumentException(player, "Valid tax types are income, transfer, market and vat");
         }
 
     }

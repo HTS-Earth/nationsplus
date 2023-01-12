@@ -15,6 +15,11 @@ import com.ollethunberg.nationsplus.commands.nation.commands.help.Help;
 import com.ollethunberg.nationsplus.commands.nation.commands.nationrelationship.NationRelationship;
 import com.ollethunberg.nationsplus.commands.nation.commands.tax.Tax;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
+import com.ollethunberg.nationsplus.lib.exceptions.NationException;
+import com.ollethunberg.nationsplus.lib.exceptions.NationNotFoundException;
+import com.ollethunberg.nationsplus.lib.exceptions.PermissionException;
+import com.ollethunberg.nationsplus.lib.exceptions.PlayerNotFoundException;
 import com.ollethunberg.nationsplus.lib.helpers.NationHelper;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.helpers.WalletBalanceHelper;
@@ -66,27 +71,29 @@ public class Nation extends WalletBalanceHelper {
 
     }
 
-    public void withdraw(Player player, Integer amount, String receiverPlayerName) throws Exception {
+    public void withdraw(Player player, Integer amount, String receiverPlayerName)
+            throws PlayerNotFoundException, SQLException, PermissionException, NationException,
+            IllegalArgumentException {
         DBPlayer potentialNationOwner = playerHelper.getPlayer(player.getUniqueId().toString());
         if (potentialNationOwner == null)
-            throw new Exception("Player not found in database");
+            throw new PlayerNotFoundException(player, player.getName());
         if (potentialNationOwner.nation == null) {
-            throw new Exception("You are not in a nation");
+            throw new NationException(player, "You are not in a nation");
         }
         com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(potentialNationOwner.nation);
         if (!nation.king_id.equals(potentialNationOwner.uid)) {
-            throw new Exception("You are not the owner of the nation");
+            throw new PermissionException(player, "You are not the owner of the nation");
         }
         DBPlayer receiver = playerHelper.getPlayerByName(receiverPlayerName);
         if (receiver == null)
-            throw new Exception("Player not found in database");
+            throw new PlayerNotFoundException(player, receiverPlayerName);
         if (!receiver.nation.equals(potentialNationOwner.nation)) {
-            throw new Exception("Player is not in your nation");
+            throw new NationException(player, "Player is not in your nation");
         }
         if (amount < 0)
-            throw new Exception("Amount must be positive");
+            throw new IllegalArgumentException(player, "Amount must be positive");
         if (amount > nation.balance)
-            throw new Exception("Nation does not have enough money");
+            throw new IllegalArgumentException(player, "Nation does not have enough money");
 
         nationHelper.addMoney(potentialNationOwner.nation, -amount);
         addBalancePlayer(receiver.uid, amount);
@@ -95,15 +102,17 @@ public class Nation extends WalletBalanceHelper {
                 + NationsPlus.dollarFormat.format(amount) + "§7 from the nation to §2" + receiverPlayerName + "§7!");
     }
 
-    public void donate(Player player, Integer amount) throws Exception {
+    public void donate(Player player, Integer amount)
+            throws PlayerNotFoundException, SQLException, PermissionException, NationNotFoundException,
+            IllegalArgumentException {
         if (amount < 0)
-            throw new Exception("Amount must be positive");
+            throw new IllegalArgumentException(player, "Amount must be positive");
 
         DBPlayer p = playerHelper.getPlayer(player.getUniqueId().toString());
         if (p == null)
-            throw new Exception("Player not found in database");
+            throw new PlayerNotFoundException(player, player.getName());
         if (p.nation == null) {
-            throw new Exception("You are not in a nation");
+            throw new NationNotFoundException(player, "(your nation)");
         }
         addBalancePlayer(p.uid, -amount);
         nationHelper.addMoney(p.nation, amount);
@@ -116,11 +125,11 @@ public class Nation extends WalletBalanceHelper {
         help.help(player, args);
     }
 
-    public void tax(Player player, String taxType, String taxIn) throws Exception {
+    public void tax(Player player, String taxType, String taxIn) throws SQLException, IllegalArgumentException {
         tax.setTax(player, taxType, taxIn);
     }
 
-    public void getStatus(Player player) throws Exception {
+    public void getStatus(Player player) throws SQLException {
         nationRelationship.listStatus(player);
     }
 }

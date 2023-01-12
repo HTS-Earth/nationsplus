@@ -44,24 +44,18 @@ public class NationRelationship {
         }
     }
 
-    public void listStatus(Player player) {
+    public void listStatus(Player player) throws SQLException {
         // List all the statuses of the nations to the player
-        try {
-            ResultSet rs = SQLHelper.query("SELECT * FROM nation_relations ");
-            while (rs.next()) {
-                String nation1 = rs.getString("nation_one");
-                String nation2 = rs.getString("nation_second");
-                String status = rs.getString("status");
-                // Print it to user with colors
-                player.sendMessage(ChatColor.GREEN + nation1 + " §2§l→§r " + ChatColor.GREEN +
-                        nation2 + " " + ChatColor.GOLD + ": §r§l" + NationRelationship.statusWithColor(status));
-            }
-        } catch (SQLException e) {
-            // Print to the user that we could not get all the nation relationships
-            player.sendMessage("Could not get all the nation relationships");
-            e.printStackTrace();
-        }
 
+        ResultSet rs = SQLHelper.query("SELECT * FROM nation_relations ");
+        while (rs.next()) {
+            String nation1 = rs.getString("nation_one");
+            String nation2 = rs.getString("nation_second");
+            String status = rs.getString("status");
+            // Print it to user with colors
+            player.sendMessage(ChatColor.GREEN + nation1 + " §2§l→§r " + ChatColor.GREEN +
+                    nation2 + " " + ChatColor.GOLD + ": §r§l" + NationRelationship.statusWithColor(status));
+        }
     }
 
     public void status(Player executor, String targetNation, String status) {
