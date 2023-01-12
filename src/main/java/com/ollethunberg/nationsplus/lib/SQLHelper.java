@@ -32,7 +32,6 @@ public class SQLHelper {
         }
         preparedStatement.executeQuery();
         ResultSet result = preparedStatement.getResultSet();
-        preparedStatement.close();
         return result;
     }
 

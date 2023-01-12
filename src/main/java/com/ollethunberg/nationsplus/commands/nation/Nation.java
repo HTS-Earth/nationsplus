@@ -42,8 +42,9 @@ public class Nation extends WalletBalanceHelper {
         king.getInventory().setHelmet(crown);
 
         // Message the king that the nation was created
-
         king.sendMessage("§2Your nation was successfully created!");
+
+        NationAutoComplete.nations.add(nationName);
     }
 
     void list(Player player) throws SQLException {
@@ -51,14 +52,14 @@ public class Nation extends WalletBalanceHelper {
         nationGUI.openNationsGUI(nations, player);
     }
 
-    void info(Player player, String nationName) throws SQLException {
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(nationName);
+    void info(Player player, String nationName) throws SQLException, NationNotFoundException {
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player, nationName);
         nationGUI.openNationUI(nation, player);
     }
 
-    void join(Player player, String nationName) throws SQLException {
+    void join(Player player, String nationName) throws SQLException, NationNotFoundException {
         // get nation
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(nationName);
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player, nationName);
         String updatePlayerNationIdSQL = "UPDATE player SET nation = ? WHERE uid = ?";
         SQLHelper.update(updatePlayerNationIdSQL, nationName, player.getUniqueId().toString());
         Events.nationPrefixCache.remove(player.getUniqueId().toString());
@@ -73,14 +74,15 @@ public class Nation extends WalletBalanceHelper {
 
     public void withdraw(Player player, Integer amount, String receiverPlayerName)
             throws PlayerNotFoundException, SQLException, PermissionException, NationException,
-            IllegalArgumentException {
+            IllegalArgumentException, NationNotFoundException {
         DBPlayer potentialNationOwner = playerHelper.getPlayer(player.getUniqueId().toString());
         if (potentialNationOwner == null)
             throw new PlayerNotFoundException(player, player.getName());
         if (potentialNationOwner.nation == null) {
             throw new NationException(player, "You are not in a nation");
         }
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(potentialNationOwner.nation);
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player,
+                potentialNationOwner.nation);
         if (!nation.king_id.equals(potentialNationOwner.uid)) {
             throw new PermissionException(player, "You are not the owner of the nation");
         }
@@ -125,7 +127,8 @@ public class Nation extends WalletBalanceHelper {
         help.help(player, args);
     }
 
-    public void tax(Player player, String taxType, String taxIn) throws SQLException, IllegalArgumentException {
+    public void tax(Player player, String taxType, String taxIn)
+            throws SQLException, IllegalArgumentException, NationNotFoundException {
         tax.setTax(player, taxType, taxIn);
     }
 

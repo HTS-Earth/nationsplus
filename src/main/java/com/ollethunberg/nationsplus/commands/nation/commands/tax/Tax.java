@@ -5,6 +5,7 @@ import java.sql.SQLException;
 import org.bukkit.entity.Player;
 
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
+import com.ollethunberg.nationsplus.lib.exceptions.NationNotFoundException;
 import com.ollethunberg.nationsplus.lib.helpers.NationHelper;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.models.Nation;
@@ -15,7 +16,8 @@ public class Tax {
     PlayerHelper playerHelper = new PlayerHelper();
     NationHelper nationHelper = new NationHelper();
 
-    public void setTax(Player player, String taxType, String tax) throws IllegalArgumentException, SQLException {
+    public void setTax(Player player, String taxType, String tax)
+            throws IllegalArgumentException, SQLException, NationNotFoundException {
         float taxFloat = Float.parseFloat(tax);
         if (taxFloat < 0 || taxFloat > 100)
             throw new IllegalArgumentException(player, "Tax must be between 0 and 100");
@@ -23,7 +25,7 @@ public class Tax {
         if (p.nation == null)
             throw new IllegalArgumentException(player, "You are not in a nation");
 
-        Nation nation = nationHelper.getNation(p.nation);
+        Nation nation = nationHelper.getNation(player, p.nation);
         if (!nation.king_id.equals(p.uid))
             throw new IllegalArgumentException(player, "You are not the king of your nation");
 

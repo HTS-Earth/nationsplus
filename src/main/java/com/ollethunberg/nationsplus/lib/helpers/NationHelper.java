@@ -9,11 +9,13 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import com.ollethunberg.nationsplus.NationsPlus;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.models.Nation;
 import com.ollethunberg.nationsplus.lib.models.db.DBNation;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
+import com.ollethunberg.nationsplus.lib.exceptions.NationNotFoundException;
 
 public class NationHelper extends SQLHelper {
     PlayerHelper playerHelper = new PlayerHelper();
@@ -24,8 +26,13 @@ public class NationHelper extends SQLHelper {
         nation.name = rs.getString("name");
         nation.king_id = rs.getString("king_id");
         nation.successor_id = rs.getString("successor_id");
+        nation.prefix = rs.getString("prefix");
         nation.balance = rs.getFloat("balance");
         nation.kills = rs.getInt("kills");
+        nation.income_tax = rs.getInt("income_tax");
+        nation.transfer_tax = rs.getInt("transfer_tax");
+        nation.market_tax = rs.getInt("market_tax");
+        nation.vat_tax = rs.getInt("vat_tax");
         nation.x = rs.getInt("x");
         nation.y = rs.getInt("y");
         nation.z = rs.getInt("z");
@@ -35,20 +42,20 @@ public class NationHelper extends SQLHelper {
 
     public Nation serializeNation(ResultSet rs) throws SQLException {
         Nation nation = (Nation) serializeDBNation(rs);
-        System.out.println(nation);
         nation.king_name = rs.getString("king_name");
         nation.membersCount = rs.getInt("membersCount");
 
         return nation;
     }
 
-    public Nation getNation(String nationName) throws SQLException {
+    public Nation getNation(Player player, String nationName) throws SQLException, NationNotFoundException {
 
         ResultSet rs = query(
                 "SELECT n.*, p.player_name as king_name, (select count(p.*)from player as p where p.nation = n.name) as \"membersCount\" from nation as n inner join player as p on p.uid=n.king_id where n.name=?",
                 nationName);
+
         if (!rs.next()) {
-            throw new Error("No nation found");
+            throw new NationNotFoundException(player, nationName);
         }
         return serializeNation(rs);
 
@@ -58,9 +65,11 @@ public class NationHelper extends SQLHelper {
         List<Nation> nations = new ArrayList<Nation>();
         ResultSet rs = query(
                 "SELECT n.*, p.player_name as king_name, (select count(p.*)from player as p where p.nation = n.name) as \"membersCount\" from nation as n inner join player as p on p.uid=n.king_id");
+        NationsPlus.LOGGER.info("Nations returned as rs.");
         while (rs.next()) {
             nations.add(serializeNation(rs));
         }
+        rs.close();
         return nations;
     }
 

@@ -19,7 +19,7 @@ public final class NationsPlus extends JavaPlugin {
     public Connection connection;
     public DatabaseManager databaseManager;
     public Configuration config;
-    public static final Logger LOGGER = Logger.getLogger("nationsplus-economy");
+    public static final Logger LOGGER = Logger.getLogger("NationsPlus");
     private static Locale usa = new Locale("en", "US");
     public static NumberFormat dollarFormat = NumberFormat.getCurrencyInstance(usa);
 

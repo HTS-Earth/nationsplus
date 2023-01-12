@@ -21,7 +21,7 @@ public class NationGUI extends GUIManager implements Listener {
 
     public void openNationUI(Nation nation, Player player) {
         Inventory inventory = player.getServer().createInventory(player, rowsToSize(2), GUITitles.get("nations"));
-        ItemStack item = createGuiItem(Material.DIAMOND, nation.name, "§6" + nation.name,
+        ItemStack item = createGuiItem(Material.DIAMOND, "§r§a" + nation.name, "§6" + nation.name,
                 "§7Prefix: §r§l§a" + nation.prefix,
                 "§7Balance: §r§l§a" + MoneyFormat.dollarFormat.format(nation.balance),
                 "§7Income tax: §r§l§a" + nation.income_tax + "%",
