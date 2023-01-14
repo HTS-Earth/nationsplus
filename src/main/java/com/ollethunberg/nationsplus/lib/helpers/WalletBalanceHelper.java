@@ -14,6 +14,7 @@ public class WalletBalanceHelper extends SQLHelper {
         if (currentPlayerResultSet.next()) {
             float currentBalance = currentPlayerResultSet.getFloat("balance");
             float newBalance = currentBalance + amount;
+            currentPlayerResultSet.close();
             if (newBalance < 0) {
                 throw new Error("Balance cannot be negative");
             } else {

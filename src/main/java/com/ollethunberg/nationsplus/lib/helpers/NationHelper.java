@@ -57,7 +57,11 @@ public class NationHelper extends SQLHelper {
         if (!rs.next()) {
             throw new NationNotFoundException(player, nationName);
         }
-        return serializeNation(rs);
+
+        Nation nation = serializeNation(rs);
+
+        rs.close();
+        return nation;
 
     }
 

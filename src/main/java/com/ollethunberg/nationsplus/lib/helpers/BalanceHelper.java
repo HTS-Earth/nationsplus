@@ -26,6 +26,7 @@ public class BalanceHelper extends SQLHelper {
         balance.player_id = player_id;
         balance.balance = balanceResultSet.getFloat("balance");
         balance.bank_balance = balanceResultSet.getFloat("bank_balance");
+        balanceResultSet.close();
         return balance;
 
     }
