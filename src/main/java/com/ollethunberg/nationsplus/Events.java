@@ -26,6 +26,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
+import com.ollethunberg.nationsplus.commands.crown.Crown;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
@@ -101,48 +102,58 @@ public class Events implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         // Cancel the event if the clicked item has "§8crown" in its lore
-        event.setCancelled(isCrownItem(event.getCurrentItem()));
+        event.setCancelled(Crown.isCrownItem(event.getCurrentItem()));
     }
 
     @EventHandler
     public void onPlayerDropItem(PlayerDropItemEvent event) {
         // Cancel the event if the dropped item has "§8crown" in its lore
-        event.setCancelled(isCrownItem(event.getItemDrop().getItemStack()));
-    }
-
-    // Helper method to check if an item has "§8crown" in its lore
-    private boolean isCrownItem(ItemStack item) {
-        if (item != null && item.hasItemMeta()) {
-            ItemMeta meta = item.getItemMeta();
-            return meta.hasLore() && meta.getLore().contains("§8crown");
-        }
-        return false;
+        event.setCancelled(Crown.isCrownItem(event.getItemDrop().getItemStack()));
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         // Get the player who died
-        Player player = event.getEntity();
+        Player victim = event.getEntity();
 
         try {
             // Check if the player was wearing a helmet with "§8crown" in its lore
-            if (isCrownItem(player.getInventory().getHelmet())) {
+            if (Crown.isCrownItem(victim.getInventory().getHelmet())) {
                 // check if the player is dead by a player
-                if (player.getKiller() instanceof Player) {
+                if (victim.getKiller() instanceof Player) {
                     // Get the player who killed the player
-                    Player killer = player.getKiller();
+                    Player killer = victim.getKiller();
 
                     // check which nation the killer belongs to
                     DBPlayer killerDB = playerHelper.getPlayer(killer.getUniqueId().toString());
-                    DBPlayer victimDB = playerHelper.getPlayer(player.getUniqueId().toString());
+                    DBPlayer victimDB = playerHelper.getPlayer(victim.getUniqueId().toString());
+                    /* Logic if killer and victim is in the same nation */
                     if (killerDB.nation.equals(victimDB.nation)) {
+                        // remove the crown from the victim's head
+                        // copy the crown to the killer's head
+                        ItemStack crown = victim.getInventory().getHelmet();
+                        ItemStack killersOldHelmet = killer.getInventory().getHelmet();
+                        if (killersOldHelmet != null) {
+                            // check if killers inventory is full
+                            if (killer.getInventory().firstEmpty() == -1) {
+                                // drop the old helmet on the ground
+                                killer.getWorld().dropItemNaturally(killer.getLocation(), killersOldHelmet);
+                            } else {
+                                // put the old helmet in the killer's inventory
+                                killer.getInventory().addItem(killersOldHelmet);
+                            }
+                        }
+                        killer.getInventory().setHelmet(crown);
+                        victim.getInventory().setHelmet(null);
                         // check if the killer is the same nation as the victim
                         // if that is the case, make the killer the new king of the nation
                         String updateNationKingSQL = "UPDATE nation SET king=? WHERE name=?;";
-                        SQLHelper.update(updateNationKingSQL, killer.getUniqueId().toString(),
+                        SQLHelper.update(updateNationKingSQL, killerDB.uid,
                                 killerDB.nation);
 
                         return;
+                    } else {
+                        /* Victim and killer is not in the same nation. */
                     }
 
                 }

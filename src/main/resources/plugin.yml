@@ -15,8 +15,8 @@ commands:
     usage: /<command>
     aliases: [n]
   crown:
-    description: Crown claiming command
-    usage: /<command> claim
+    description: Pass the crown to a player
+    usage: /<command> pass <player>
     aliases: [c]
   reinforce:
     description: Reinforcement command

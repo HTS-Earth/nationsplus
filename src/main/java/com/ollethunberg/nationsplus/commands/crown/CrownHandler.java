@@ -20,19 +20,24 @@ public class CrownHandler implements CommandExecutor {
             /* Player sent the command */
             String cmd = command.getName().toLowerCase();
             Player player = (Player) sender;
+            if (args.length == 0) {
+                player.sendMessage("§r[§4§lERROR§r]§c You must specify an action!");
+                return true;
+            }
             String action = args[0].toLowerCase();
+
             try {
 
                 if (cmd.equals("crown")) {
                     switch (action) {
-                        case "claim": {
-                            crown.claim(player);
+                        case "pass": {
+                            if (args.length < 2) {
+                                throw new IllegalArgumentException("You must specify a player to pass the crown to!");
+                            }
+                            crown.pass(player, args[1]);
                             break;
                         }
-                        case "unclaim": {
-                            crown.unclaim(player);
-                            break;
-                        }
+
                     }
                 }
 

@@ -15,8 +15,13 @@ import org.bukkit.inventory.meta.ItemMeta;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
 import com.ollethunberg.nationsplus.lib.exceptions.NationException;
+import com.ollethunberg.nationsplus.lib.exceptions.PlayerNotFoundException;
+import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
+import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 
 public class Crown extends SQLHelper {
+    PlayerHelper playerHelper = new PlayerHelper();
+
     public static final ItemStack crown(String nation) {
         ItemStack crown = new ItemStack(Material.CHAINMAIL_HELMET, 1);
         crown.addUnsafeEnchantment(Enchantment.DURABILITY, 10);
@@ -26,8 +31,7 @@ public class Crown extends SQLHelper {
         crownMeta.setUnbreakable(true);
         crownMeta.setDisplayName("§6§lCrown of " + nation);
         List<String> lore = new ArrayList<String>(); // create a List<String> for the lore
-        lore.add("§eUse the crown to claim the throne");
-        lore.add("§a/crown claim");
+        lore.add("§a/crown pass ");
         lore.add("§8crown");
         // Add the nation name to the lore
         lore.add(nation);
@@ -37,88 +41,46 @@ public class Crown extends SQLHelper {
         return crown;
     }
 
-    public void unclaim(Player p) throws SQLException {
-        // Check which player is the king of the nation
-        String getKingSQLString = "SELECT n.king_id, n.name FROM player as p inner join nation as n on n.name = p.nation WHERE p.uid = ?";
-        try {
-            ResultSet rs = SQLHelper.query(getKingSQLString, p.getUniqueId().toString());
-            rs.next();
-            // If the player is the king, unclaim the crown
-            if (rs.getString("king_id") != null && rs.getString("king_id").equals(p.getUniqueId().toString())) {
-                String unclaimCrownSQLString = "UPDATE nation SET king_id = null WHERE king_id = ?";
-                SQLHelper.update(unclaimCrownSQLString, p.getUniqueId().toString());
-                // Give a golden helmet item to the player
-
-                p.getInventory().addItem(Crown.crown(rs.getString("nation"))); // add the ItemStack to the
-                p.sendMessage("§aYou have unclaimed the crown!");
-            } else {
-                p.sendMessage("§cYou are not the king of your nation! Therefore, you can't unclaim the crown");
-            }
-            rs.close();
-        } catch (SQLException e) {
-            // Message the user that something went wrong claiming the crown
-            p.sendMessage("§cSomething went wrong unclaiming the crown.");
+    public void pass(Player oldKing, String newKingName)
+            throws SQLException, PlayerNotFoundException, IllegalArgumentException {
+        // check if the oldking has a helmet that is a crown
+        if (!isCrownItem(oldKing.getInventory().getHelmet())) {
+            throw new IllegalArgumentException(oldKing, "You are not wearing a crown!");
         }
+        // check if they are in the same nation
+        DBPlayer dbOldKing = playerHelper.getPlayer(oldKing.getUniqueId().toString());
+        DBPlayer dbNewKing = playerHelper.getPlayerByName(newKingName);
+
+        if (!dbOldKing.nation.equals(dbNewKing.nation)) {
+            throw new IllegalArgumentException(oldKing, "You are not in the same nation as the new king!");
+        }
+        // crown the new king
+        String claimCrownSQLString = "UPDATE nation SET king_id = ? WHERE name = ?";
+        SQLHelper.update(claimCrownSQLString, dbNewKing.uid, dbOldKing.nation);
+        // remove the crown from the old king
+        oldKing.getInventory().setHelmet(null);
+        // give the crown to the new king
+        Player newKing = Bukkit.getPlayer(newKingName);
+        newKing.getInventory().setHelmet(crown(dbOldKing.nation));
+
+        // Message the old king that they have passed the crown
+        oldKing.sendMessage("§aYou have passed the crown to " + newKingName);
+        // Message the new king that they have been crowned
+        newKing.sendMessage("§aYou have been crowned as the king of " + dbOldKing.nation);
+
+        // announce to the server that the crown has been passed
+        Bukkit.broadcastMessage("§l§6[NEW KING§6]§r[§4§l " + dbOldKing.nation + "§r] §4" + oldKing.getName()
+                + "§a has passed the crown to §6§l" + newKingName + "§a!");
 
     }
 
-    public void claim(Player p) throws SQLException, NationException, IllegalArgumentException {
-        // Check if the player is holding an item with the tag "crown"
-
-        if (p.getInventory().getItemInMainHand().hasItemMeta()
-                && p.getInventory().getItemInMainHand().getItemMeta().hasLore()
-                && p.getInventory().getItemInMainHand().getItemMeta().getLore().contains("§8crown")) {
-            // Get the last line of the lore
-            String nationName = p.getInventory().getItemInMainHand().getItemMeta().getLore()
-                    .get(p.getInventory().getItemInMainHand().getItemMeta().getLore().size() - 1);
-
-            // Check if the player is in a nation
-            String isInNationSQLString = "SELECT nation FROM player WHERE uid = ?";
-            ResultSet rs = SQLHelper.query(isInNationSQLString, p.getUniqueId().toString());
-            // Check if the player is in the nation
-            rs.next();
-            // if the Player is part of the nation, the claim the crown and set the king_id
-            // to the players uid
-            if (rs.getString("nation") != null && rs.getString("nation").equals(nationName)) {
-                String claimCrownSQLString = "UPDATE nation SET king_id = ? WHERE name = ?";
-                SQLHelper.update(claimCrownSQLString, p.getUniqueId().toString(), rs.getString("nation"));
-
-                p.sendMessage("§aYou have claimed the crown!");
-            } else {
-                // See if there is a nation with the nation name
-                String getNationSQLString = "SELECT name FROM nation WHERE name = ?";
-                ResultSet nationRs = SQLHelper.query(getNationSQLString, nationName);
-                if (nationRs.next()) {
-
-                    String nation = nationRs.getString("name");
-                    // Set the nation king_id to be null
-                    String unclaimCrownSQLString = "UPDATE nation SET king_id = null WHERE name = ?";
-                    SQLHelper.update(unclaimCrownSQLString, nation);
-                    // Announce that the nation has fallen
-
-                    // Make all the players that belonged to the nation nationless
-                    String makeNationlessSQLString = "UPDATE player SET nation = null WHERE nation = ?";
-                    SQLHelper.update(makeNationlessSQLString, nation);
-                    // Remove the relationships of the nation
-                    String removeRelationshipsSQLString = "DELETE FROM nation_relations WHERE nation_one = ? or nation_second = ?;";
-                    SQLHelper.update(removeRelationshipsSQLString, nation, nation);
-                    // Remove the nation
-                    String removeNationSQLString = "DELETE FROM nation WHERE name = ?";
-                    SQLHelper.update(removeNationSQLString, nation);
-                    // Remove the crown from the players main hand
-                    p.getInventory().setItemInMainHand(new ItemStack(Material.AIR));
-
-                    Bukkit.getServer()
-                            .broadcastMessage("§c§lThe nation " + nation + " has fallen!");
-                    Bukkit.getServer().broadcastMessage("§aAll its members are not nationless");
-                } else {
-                    throw new NationException(p, "There is no nation that belongs to this crown!");
-                }
-
-            }
-
-        } else {
-            throw new IllegalArgumentException(p, "You are not holding a crown!");
+    // Helper method to check if an item has "§8crown" in its lore
+    public static boolean isCrownItem(ItemStack item) {
+        if (item != null && item.hasItemMeta()) {
+            ItemMeta meta = item.getItemMeta();
+            return meta.hasLore() && meta.getLore().contains("§8crown");
         }
+        return false;
     }
+
 }
