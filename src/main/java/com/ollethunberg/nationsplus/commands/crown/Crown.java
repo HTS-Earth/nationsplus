@@ -54,8 +54,8 @@ public class Crown extends SQLHelper {
             } else {
                 p.sendMessage("§cYou are not the king of your nation! Therefore, you can't unclaim the crown");
             }
+            rs.close();
         } catch (SQLException e) {
-            e.printStackTrace();
             // Message the user that something went wrong claiming the crown
             p.sendMessage("§cSomething went wrong unclaiming the crown.");
         }
