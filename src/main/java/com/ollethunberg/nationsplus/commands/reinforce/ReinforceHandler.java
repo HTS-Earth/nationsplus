@@ -20,7 +20,7 @@ public class ReinforceHandler implements CommandExecutor {
         if (sender instanceof Player) {
             /* Player sent the command */
             Player player = (Player) sender;
-            String action = args[0].toUpperCase();
+            String action = args.length > 0 ? args[0].toUpperCase() : null;
             try {
                 reinforce.reinforce(player, action);
             } catch (SQLException e) {

@@ -37,6 +37,7 @@ public class Events implements Listener {
     public static HashMap<String, String> nationPrefixCache = new HashMap<String, String>();
     public static HashMap<String, String> rankPrefixCache = new HashMap<String, String>();
     private PlayerHelper playerHelper = new PlayerHelper();
+
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
 
@@ -128,13 +129,12 @@ public class Events implements Listener {
                     // check which nation the killer belongs to
                     DBPlayer killerDB = playerHelper.getPlayer(killer.getUniqueId().toString());
                     DBPlayer victimDB = playerHelper.getPlayer(player.getUniqueId().toString());
-                    if(killerDB.nation.equals(victimDB.nation)) {
+                    if (killerDB.nation.equals(victimDB.nation)) {
                         // check if the killer is the same nation as the victim
                         killer.sendMessage("§cYou can't kill your own nation!");
-                        
+
                         return;
                     }
-                    
 
                 }
             }
@@ -178,9 +178,18 @@ public class Events implements Listener {
         try (ResultSet rs = SQLHelper.query(getReinforcementSQL, block_id,
                 event.getBlock().getLocation().getWorld().getName())) {
             if (rs.next()) {
+                String nationOfClaim = rs.getString("nation");
+                DBPlayer player = playerHelper.getPlayer(event.getPlayer().getUniqueId().toString());
+
+                Boolean isPlayerOwnerOfClaim = rs.getString("player_id")
+                        .equals(player.uid);
+                String reinforcementMode = rs.getString("reinforcement_mode").equals("PRIVATE") ? "private"
+                        : "nation";
                 // Check if the player is the owner of the reinforcement
-                if (rs.getString("player_id").equals(event.getPlayer().getUniqueId().toString())
-                        && rs.getString("reinforcement_mode").equals("PRIVATE")) {
+                if ((isPlayerOwnerOfClaim
+                        && reinforcementMode.equals("private"))
+                        || (nationOfClaim.equals(player.nation)
+                                && reinforcementMode.equals("nation"))) {
                     // Remove the reinforcement
                     String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";
                     SQLHelper.update(removeReinforcementSQL, block_id,
