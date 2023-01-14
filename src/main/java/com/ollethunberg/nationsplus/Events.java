@@ -45,7 +45,8 @@ public class Events implements Listener {
 
             // Check if they are in the database.
             String isPlayerInDatabaseSQL = "SELECT EXISTS ( SELECT FROM player WHERE uid = ? );";
-            ResultSet rs = SQLHelper.query(isPlayerInDatabaseSQL, event.getPlayer().getUniqueId().toString());
+            String playerId = event.getPlayer().getUniqueId().toString();
+            ResultSet rs = SQLHelper.query(isPlayerInDatabaseSQL, playerId);
 
             rs.next();
 
@@ -53,7 +54,7 @@ public class Events implements Listener {
                 plugin.getLogger().info("New player joined!");
                 // Insert into database
                 String insertNewPlayerSQL = "INSERT INTO player(uid, last_login, player_name, kills, deaths) VALUES (?, CURRENT_TIMESTAMP, ?, 0,0);";
-                SQLHelper.update(insertNewPlayerSQL, event.getPlayer().getUniqueId().toString(),
+                SQLHelper.update(insertNewPlayerSQL, playerId,
                         event.getPlayer().getName());
                 // Teleport the player to the spawn
             } else {
@@ -61,22 +62,27 @@ public class Events implements Listener {
                 // Check if the player has a ban on them on the player_bans table
                 String playerBannedUntil = "SELECT banned_date + (banned_minutes * interval '1 minute') as banned_until, player_id FROM player_bans WHERE player_id = ? order by banned_date DESC;";
                 ResultSet rsPlayerBannedUntil = SQLHelper.query(playerBannedUntil,
-                        event.getPlayer().getUniqueId().toString());
+                        playerId);
                 rsPlayerBannedUntil.next();
 
                 String updatePlayerLastLoginSQL = "UPDATE player SET last_login=CURRENT_TIMESTAMP, player_name=? where uid = ?";
                 SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
-                        event.getPlayer().getUniqueId().toString());
+                        playerId);
                 // Update our prefix cache with the prefix of the nation that the player is in.
-                String getPlayerNationSQL = "SELECT n.prefix, p.rank FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
+                String getPlayerNationSQL = "SELECT n.prefix, p.rank, n.king_id FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
                 ResultSet rsPlayerNation = SQLHelper.query(getPlayerNationSQL,
-                        event.getPlayer().getUniqueId().toString());
+                        playerId);
                 if (rsPlayerNation.next()) {
 
                     if (rsPlayerNation.getString("rank").equals("vip")) {
-                        rankPrefixCache.put(event.getPlayer().getUniqueId().toString(), "§6[VIP§6]");
+                        rankPrefixCache.put(playerId, "§6[VIP§6]");
                     }
-                    nationPrefixCache.put(event.getPlayer().getUniqueId().toString(),
+                    // Check if the player is the king of the nation
+                    if (rsPlayerNation.getString("king_id").equals(playerId)) {
+                        rankPrefixCache.put(playerId,
+                                "§6[King§6]");
+                    }
+                    nationPrefixCache.put(playerId,
                             rsPlayerNation.getString("prefix"));
                 } else {
                     plugin.getLogger().info("Player is not in a nation!");
@@ -131,7 +137,10 @@ public class Events implements Listener {
                     DBPlayer victimDB = playerHelper.getPlayer(player.getUniqueId().toString());
                     if (killerDB.nation.equals(victimDB.nation)) {
                         // check if the killer is the same nation as the victim
-                        killer.sendMessage("§cYou can't kill your own nation!");
+                        // if that is the case, make the killer the new king of the nation
+                        String updateNationKingSQL = "UPDATE nation SET king=? WHERE name=?;";
+                        SQLHelper.update(updateNationKingSQL, killer.getUniqueId().toString(),
+                                killerDB.nation);
 
                         return;
                     }
