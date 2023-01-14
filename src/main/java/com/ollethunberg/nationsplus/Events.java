@@ -43,7 +43,6 @@ public class Events implements Listener {
     public void onPlayerJoin(final PlayerJoinEvent event) {
 
         try {
-
             // Check if they are in the database.
             String isPlayerInDatabaseSQL = "SELECT EXISTS ( SELECT FROM player WHERE uid = ? );";
             String playerId = event.getPlayer().getUniqueId().toString();
@@ -60,12 +59,6 @@ public class Events implements Listener {
                 // Teleport the player to the spawn
             } else {
                 NationsPlus.LOGGER.info("Player does exist in the database!");
-                // Check if the player has a ban on them on the player_bans table
-                String playerBannedUntil = "SELECT banned_date + (banned_minutes * interval '1 minute') as banned_until, player_id FROM player_bans WHERE player_id = ? order by banned_date DESC;";
-                ResultSet rsPlayerBannedUntil = SQLHelper.query(playerBannedUntil,
-                        playerId);
-                rsPlayerBannedUntil.next();
-
                 String updatePlayerLastLoginSQL = "UPDATE player SET last_login=CURRENT_TIMESTAMP, player_name=? where uid = ?";
                 SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
                         playerId);
@@ -74,8 +67,8 @@ public class Events implements Listener {
                 ResultSet rsPlayerNation = SQLHelper.query(getPlayerNationSQL,
                         playerId);
                 if (rsPlayerNation.next()) {
-
-                    if (rsPlayerNation.getString("rank").equals("vip")) {
+                    String playerRank = rsPlayerNation.getString("rank");
+                    if (playerRank != null && playerRank.equals("vip")) {
                         rankPrefixCache.put(playerId, "§6[VIP§6]");
                     }
                     // Check if the player is the king of the nation
