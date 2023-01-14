@@ -1,6 +1,5 @@
 package com.ollethunberg.nationsplus.commands.crown;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +13,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
-import com.ollethunberg.nationsplus.lib.exceptions.NationException;
 import com.ollethunberg.nationsplus.lib.exceptions.PlayerNotFoundException;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
@@ -44,6 +42,9 @@ public class Crown extends SQLHelper {
     public void pass(Player oldKing, String newKingName)
             throws SQLException, PlayerNotFoundException, IllegalArgumentException {
         // check if the oldking has a helmet that is a crown
+        if (oldKing.getPlayer().getName().equals(newKingName)) {
+            throw new IllegalArgumentException(oldKing, "You can't pass the crown to yourself!");
+        }
         if (!isCrownItem(oldKing.getInventory().getHelmet())) {
             throw new IllegalArgumentException(oldKing, "You are not wearing a crown!");
         }
@@ -69,7 +70,7 @@ public class Crown extends SQLHelper {
         newKing.sendMessage("§aYou have been crowned as the king of " + dbOldKing.nation);
 
         // announce to the server that the crown has been passed
-        Bukkit.broadcastMessage("§l§6[NEW KING§6]§r[§4§l " + dbOldKing.nation + "§r] §4" + oldKing.getName()
+        Bukkit.broadcastMessage("§l§6[NEW KING§6]§r [§2§l" + dbOldKing.nation + "§r] §4" + oldKing.getName()
                 + "§a has passed the crown to §6§l" + newKingName + "§a!");
 
     }

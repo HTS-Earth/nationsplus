@@ -128,7 +128,7 @@ public class Nation extends WalletBalanceHelper {
     }
 
     public void tax(Player player, String taxType, String taxIn)
-            throws SQLException, IllegalArgumentException, NationNotFoundException {
+            throws SQLException, IllegalArgumentException, NationNotFoundException, PlayerNotFoundException {
         tax.setTax(player, taxType, taxIn);
     }
 

@@ -23,11 +23,11 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 import com.ollethunberg.nationsplus.commands.crown.Crown;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.exceptions.ExceptionBase;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 
@@ -52,14 +52,14 @@ public class Events implements Listener {
             rs.next();
 
             if (!rs.getBoolean("exists")) {
-                plugin.getLogger().info("New player joined!");
+                NationsPlus.LOGGER.info("New player joined!");
                 // Insert into database
                 String insertNewPlayerSQL = "INSERT INTO player(uid, last_login, player_name, kills, deaths) VALUES (?, CURRENT_TIMESTAMP, ?, 0,0);";
                 SQLHelper.update(insertNewPlayerSQL, playerId,
                         event.getPlayer().getName());
                 // Teleport the player to the spawn
             } else {
-                plugin.getLogger().info("Player does exist in the database!");
+                NationsPlus.LOGGER.info("Player does exist in the database!");
                 // Check if the player has a ban on them on the player_bans table
                 String playerBannedUntil = "SELECT banned_date + (banned_minutes * interval '1 minute') as banned_until, player_id FROM player_bans WHERE player_id = ? order by banned_date DESC;";
                 ResultSet rsPlayerBannedUntil = SQLHelper.query(playerBannedUntil,
@@ -86,7 +86,7 @@ public class Events implements Listener {
                     nationPrefixCache.put(playerId,
                             rsPlayerNation.getString("prefix"));
                 } else {
-                    plugin.getLogger().info("Player is not in a nation!");
+                    NationsPlus.LOGGER.info("Player is not in a nation!");
                     event.getPlayer().sendMessage("§aPlease join a nation!");
                 }
 
@@ -160,7 +160,10 @@ public class Events implements Listener {
             }
         } catch (SQLException e) {
             // log error
-            plugin.getLogger().info("Error: " + e.getMessage());
+            NationsPlus.LOGGER.info("Error: " + e.getMessage());
+        } catch (ExceptionBase e) {
+            // log error
+            NationsPlus.LOGGER.info("Error: " + e.getMessage());
         }
 
     }
@@ -254,7 +257,9 @@ public class Events implements Listener {
 
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            NationsPlus.LOGGER.warning("Error: " + e.getMessage());
+        } catch (ExceptionBase e) {
+            NationsPlus.LOGGER.warning(e.getMessage());
         }
 
     }
@@ -377,7 +382,7 @@ public class Events implements Listener {
 
     @EventHandler
     public void onExplosionPrimeEvent(EntityExplodeEvent event) {
-        plugin.getLogger().info(event.getEntity().toString());
+        NationsPlus.LOGGER.info(event.getEntity().toString());
         // loop through all the impacted block in the event.blockList and check if they
         // are reinforced
         for (Block block : event.blockList()) {
@@ -392,7 +397,7 @@ public class Events implements Listener {
                     // block
                     // reinforcement from the database
                     int newHealth = rs.getInt("health") - (int) Math.ceil((10 / block.getType().getHardness()));
-                    plugin.getLogger().info("block " + block.getType().name() + " has new health " + newHealth + " "
+                    NationsPlus.LOGGER.info("block " + block.getType().name() + " has new health " + newHealth + " "
                             + block.getType().getHardness());
                     if (newHealth <= 0) {
                         String removeReinforcementSQL = "DELETE FROM block_reinforcement WHERE block_id = ? AND world = ?;";

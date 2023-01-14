@@ -4,8 +4,10 @@ import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.postgresql.Driver;
 
+import com.ollethunberg.nationsplus.commands.crown.CrownAutoComplete;
 import com.ollethunberg.nationsplus.commands.crown.CrownHandler;
 import com.ollethunberg.nationsplus.commands.nation.NationAutoComplete;
+import com.ollethunberg.nationsplus.commands.nation.NationGUI;
 import com.ollethunberg.nationsplus.commands.nation.NationHandler;
 import com.ollethunberg.nationsplus.commands.reinforce.ReinforceHandler;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
@@ -22,6 +24,8 @@ public final class NationsPlus extends JavaPlugin {
     public static final Logger LOGGER = Logger.getLogger("NationsPlus");
     private static Locale usa = new Locale("en", "US");
     public static NumberFormat dollarFormat = NumberFormat.getCurrencyInstance(usa);
+    /* GUI */
+    NationGUI nationGUI;
 
     /* CommandHandlers */
     NationHandler nationHandler;
@@ -56,9 +60,11 @@ public final class NationsPlus extends JavaPlugin {
             nationHandler = new NationHandler();
             crownHandler = new CrownHandler();
             reinforceHandler = new ReinforceHandler();
+            nationGUI = new NationGUI();
 
             // Register events listeners that needs a SQL connection
             getServer().getPluginManager().registerEvents(new Events(), this);
+            getServer().getPluginManager().registerEvents(nationGUI, this);
 
             // Register commands
             getCommand("nationsplus").setExecutor(nationHandler);
@@ -67,6 +73,7 @@ public final class NationsPlus extends JavaPlugin {
             getCommand("reinforce").setExecutor(reinforceHandler);
 
             getCommand("nation").setTabCompleter(new NationAutoComplete());
+            getCommand("crown").setTabCompleter(new CrownAutoComplete());
 
         } catch (SQLException e) {
             System.err.format("SQL State: %s\n%s", e.getSQLState(), e.getMessage());
