@@ -3,13 +3,11 @@ package com.ollethunberg.nationsplus.commands.nation;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
-import org.bukkit.util.StringUtil;
 
 import com.ollethunberg.nationsplus.NationsPlus;
 import com.ollethunberg.nationsplus.lib.helpers.NationHelper;
@@ -39,14 +37,7 @@ public class NationAutoComplete implements TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         try {
             if (args.length == 1) {
-
-                // Check if command is nation
-                final List<String> completions = new ArrayList<String>(Arrays.asList(keywords));
-                final List<String> keyWordAsArrayList = new ArrayList<String>(Arrays.asList(keywords));
-
-                StringUtil.copyPartialMatches(args[0], keyWordAsArrayList, completions);
-                Collections.sort(completions);
-                return completions;
+                return Arrays.asList(keywords);
             } else {
                 switch (args[0]) {
                     case "tax":
@@ -75,7 +66,39 @@ public class NationAutoComplete implements TabCompleter {
                             return nations;
                         }
                         break;
-
+                    case "create":
+                        if (args.length == 2) {
+                            return new ArrayList<String>() {
+                                {
+                                    add("<name>");
+                                }
+                            };
+                        } else if (args.length == 3) {
+                            return new ArrayList<String>() {
+                                {
+                                    add("<prefix>");
+                                }
+                            };
+                        }
+                        break;
+                    case "donate":
+                        if (args.length == 2) {
+                            return new ArrayList<String>() {
+                                {
+                                    add("<amount>");
+                                }
+                            };
+                        }
+                        break;
+                    case "withdraw":
+                        if (args.length == 2) {
+                            return new ArrayList<String>() {
+                                {
+                                    add("<amount>");
+                                }
+                            };
+                        }
+                        break;
                 }
                 return null;
 
