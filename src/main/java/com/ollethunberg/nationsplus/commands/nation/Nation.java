@@ -15,6 +15,7 @@ import com.ollethunberg.nationsplus.commands.nation.commands.help.Help;
 import com.ollethunberg.nationsplus.commands.nation.commands.nationrelationship.NationRelationship;
 import com.ollethunberg.nationsplus.commands.nation.commands.tax.Tax;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
+import com.ollethunberg.nationsplus.lib.exceptions.BadPermissionException;
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
 import com.ollethunberg.nationsplus.lib.exceptions.NationException;
 import com.ollethunberg.nationsplus.lib.exceptions.NationNotFoundException;
@@ -24,6 +25,7 @@ import com.ollethunberg.nationsplus.lib.helpers.NationHelper;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
 import com.ollethunberg.nationsplus.lib.helpers.WalletBalanceHelper;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
+import com.ollethunberg.nationsplus.misc.Discord;
 
 public class Nation extends WalletBalanceHelper {
     NationHelper nationHelper = new NationHelper();
@@ -53,13 +55,19 @@ public class Nation extends WalletBalanceHelper {
     }
 
     void info(Player player, String nationName) throws SQLException, NationNotFoundException {
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player, nationName);
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(nationName);
         nationGUI.openNationUI(nation, player);
     }
 
-    void join(Player player, String nationName) throws SQLException, NationNotFoundException {
+    void join(Player player, String nationName)
+            throws SQLException, NationNotFoundException, PlayerNotFoundException, BadPermissionException {
+        // get player
+        DBPlayer dbPlayer = playerHelper.getPlayer(player.getUniqueId().toString());
+        if (dbPlayer.nation != null) {
+            throw new BadPermissionException(player, "You are already in a nation!");
+        }
         // get nation
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player, nationName);
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(nationName);
         String updatePlayerNationIdSQL = "UPDATE player SET nation = ? WHERE uid = ?";
         SQLHelper.update(updatePlayerNationIdSQL, nationName, player.getUniqueId().toString());
         Events.nationPrefixCache.remove(player.getUniqueId().toString());
@@ -69,6 +77,18 @@ public class Nation extends WalletBalanceHelper {
 
         player.teleport(nationLocation);
         player.sendMessage("§aYou have successfully joined the nation!");
+        // create random 5 digit code (letters)
+        String code = "";
+        for (int i = 0; i < 5; i++) {
+            int random = (int) (Math.random() * 26 + 97);
+            code += (char) random;
+        }
+        // save code to db
+        String insertCodeSQL = "UPDATE player set discord_code = ? WHERE uid = ?";
+        SQLHelper.update(insertCodeSQL, code, player.getUniqueId().toString());
+        // send code to player
+        player.spigot().sendMessage(Discord.getInviteLinkComponent());
+        player.sendMessage("§aEnter your nation discord role by typing §e/code " + code + "§r in the main channel");
 
     }
 
@@ -81,7 +101,7 @@ public class Nation extends WalletBalanceHelper {
         if (potentialNationOwner.nation == null) {
             throw new NationException(player, "You are not in a nation");
         }
-        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(player,
+        com.ollethunberg.nationsplus.lib.models.Nation nation = nationHelper.getNation(
                 potentialNationOwner.nation);
         if (!nation.king_id.equals(potentialNationOwner.uid)) {
             throw new PermissionException(player, "You are not the owner of the nation");
@@ -116,7 +136,12 @@ public class Nation extends WalletBalanceHelper {
         if (p.nation == null) {
             throw new NationNotFoundException(player, "(your nation)");
         }
-        addBalancePlayer(p.uid, -amount);
+        try {
+            addBalancePlayer(p.uid, -amount);
+        } catch (java.lang.IllegalArgumentException e) {
+            throw new IllegalArgumentException(player, "You do not have enough money");
+        }
+
         nationHelper.addMoney(p.nation, amount);
         player.sendMessage("§aYou donated " + NationsPlus.dollarFormat.format(amount) + " to your nation");
         nationHelper.notifyNationMembers(p.nation, "§2" + player.getName() + "§7 donated §a"

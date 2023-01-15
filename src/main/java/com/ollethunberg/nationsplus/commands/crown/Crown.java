@@ -39,6 +39,26 @@ public class Crown extends SQLHelper {
         return crown;
     }
 
+    public void create(Player player, String targetPlayer) throws SQLException, PlayerNotFoundException {
+        if (targetPlayer == null) {
+            DBPlayer dbPlayer = playerHelper.getPlayer(player.getUniqueId().toString());
+            ItemStack crown = crown(dbPlayer.nation);
+            player.getInventory().setHelmet(crown);
+        } else {
+            DBPlayer dbPlayer = playerHelper.getPlayerByName(targetPlayer);
+            ItemStack crown = crown(dbPlayer.nation);
+            Player target = Bukkit.getPlayer(targetPlayer);
+            target.getInventory().setHelmet(crown);
+            // update nations king
+            String claimCrownSQLString = "UPDATE nation SET king_id = ? WHERE name = ?";
+            SQLHelper.update(claimCrownSQLString, dbPlayer.uid, dbPlayer.nation);
+            // Message the player that they have been crowned
+            target.sendMessage("§aYou have been crowned as the king of " + dbPlayer.nation + " by administrator: "
+                    + player.getName());
+        }
+
+    }
+
     public void pass(Player oldKing, String newKingName)
             throws SQLException, PlayerNotFoundException, IllegalArgumentException {
         // check if the oldking has a helmet that is a crown

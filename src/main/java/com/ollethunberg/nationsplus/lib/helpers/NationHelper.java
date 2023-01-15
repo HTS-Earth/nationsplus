@@ -48,14 +48,14 @@ public class NationHelper extends SQLHelper {
         return nation;
     }
 
-    public Nation getNation(Player player, String nationName) throws SQLException, NationNotFoundException {
+    public Nation getNation(String nationName) throws SQLException, NationNotFoundException {
 
         ResultSet rs = query(
                 "SELECT n.*, p.player_name as king_name, (select count(p.*)from player as p where p.nation = n.name) as \"membersCount\" from nation as n inner join player as p on p.uid=n.king_id where n.name=?",
                 nationName);
 
         if (!rs.next()) {
-            throw new NationNotFoundException(player, nationName);
+            throw new SQLException("Nation not found");
         }
 
         Nation nation = serializeNation(rs);

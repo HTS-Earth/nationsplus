@@ -26,7 +26,7 @@ public class Tax {
         if (p.nation == null)
             throw new IllegalArgumentException(player, "You are not in a nation");
 
-        Nation nation = nationHelper.getNation(player, p.nation);
+        Nation nation = nationHelper.getNation(p.nation);
         if (!nation.king_id.equals(p.uid))
             throw new IllegalArgumentException(player, "You are not the king of your nation");
 

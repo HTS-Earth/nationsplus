@@ -67,6 +67,11 @@ public class NationRelationship {
                     executor.getUniqueId().toString());
             plugin.getLogger().info("Executing nation relationship command");
             if (rs.next()) {
+                if (rs.getString("nation").equals(targetNation)) {
+                    // Player is not in a nation
+                    executor.sendMessage("You can't set a relationship with your own nation");
+                    return;
+                }
                 // Check if the requesting player is the king
                 plugin.getLogger().info("Checking if the player is the king");
                 if (rs.getString("king_id").equalsIgnoreCase(executor.getUniqueId().toString())) {

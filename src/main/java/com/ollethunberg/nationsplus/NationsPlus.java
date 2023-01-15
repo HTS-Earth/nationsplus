@@ -9,6 +9,7 @@ import com.ollethunberg.nationsplus.commands.crown.CrownHandler;
 import com.ollethunberg.nationsplus.commands.nation.NationAutoComplete;
 import com.ollethunberg.nationsplus.commands.nation.NationGUI;
 import com.ollethunberg.nationsplus.commands.nation.NationHandler;
+import com.ollethunberg.nationsplus.commands.reinforce.ReinforceAutoComplete;
 import com.ollethunberg.nationsplus.commands.reinforce.ReinforceHandler;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 
@@ -74,6 +75,7 @@ public final class NationsPlus extends JavaPlugin {
 
             getCommand("nation").setTabCompleter(new NationAutoComplete());
             getCommand("crown").setTabCompleter(new CrownAutoComplete());
+            getCommand("reinforce").setTabCompleter(new ReinforceAutoComplete());
 
         } catch (SQLException e) {
             System.err.format("SQL State: %s\n%s", e.getSQLState(), e.getMessage());

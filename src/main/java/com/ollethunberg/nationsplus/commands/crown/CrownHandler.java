@@ -37,6 +37,15 @@ public class CrownHandler implements CommandExecutor {
                             crown.pass(player, args[1]);
                             break;
                         }
+                        case "create": {
+                            // check permission for crown.create
+                            if (!player.hasPermission("nationsplus.crown.create")) {
+                                player.sendMessage("§r[§4§lERROR§r]§c You do not have permission to create a crown!");
+                                return true;
+                            }
+                            crown.create(player, args.length > 1 ? args[1] : null);
+                            break;
+                        }
 
                     }
                 }

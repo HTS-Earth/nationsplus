@@ -7,7 +7,7 @@ import com.ollethunberg.nationsplus.lib.SQLHelper;
 
 public class WalletBalanceHelper extends SQLHelper {
 
-    public float addBalancePlayer(String uid, float amount) throws SQLException, Error {
+    public float addBalancePlayer(String uid, float amount) throws SQLException, IllegalArgumentException {
         // get the player id and check their balance.
 
         ResultSet currentPlayerResultSet = query("SELECT balance from player where uid = ?;", uid);
@@ -16,7 +16,7 @@ public class WalletBalanceHelper extends SQLHelper {
             float newBalance = currentBalance + amount;
             currentPlayerResultSet.close();
             if (newBalance < 0) {
-                throw new Error("Balance cannot be negative");
+                throw new IllegalArgumentException("Balance cannot be negative");
             } else {
                 update("UPDATE player SET balance = ? WHERE uid = ?;", newBalance, uid);
                 return newBalance;

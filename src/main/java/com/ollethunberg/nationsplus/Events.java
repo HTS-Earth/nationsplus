@@ -3,6 +3,8 @@ package com.ollethunberg.nationsplus;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -22,22 +24,33 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
 import com.ollethunberg.nationsplus.commands.crown.Crown;
+import com.ollethunberg.nationsplus.lib.MoneyFormat;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.exceptions.ExceptionBase;
+import com.ollethunberg.nationsplus.lib.helpers.NationHelper;
 import com.ollethunberg.nationsplus.lib.helpers.PlayerHelper;
+import com.ollethunberg.nationsplus.lib.helpers.WalletBalanceHelper;
+import com.ollethunberg.nationsplus.lib.models.db.DBNation;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
+import com.ollethunberg.nationsplus.misc.Discord;
 
-public class Events implements Listener {
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+
+public class Events extends WalletBalanceHelper implements Listener {
 
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
     private Configuration config = plugin.getConfig();
     public static HashMap<String, String> nationPrefixCache = new HashMap<String, String>();
     public static HashMap<String, String> rankPrefixCache = new HashMap<String, String>();
     private PlayerHelper playerHelper = new PlayerHelper();
+    private NationHelper nationHelper = new NationHelper();
 
     @EventHandler
     public void onPlayerJoin(final PlayerJoinEvent event) {
@@ -63,7 +76,7 @@ public class Events implements Listener {
                 SQLHelper.update(updatePlayerLastLoginSQL, event.getPlayer().getDisplayName(),
                         playerId);
                 // Update our prefix cache with the prefix of the nation that the player is in.
-                String getPlayerNationSQL = "SELECT n.prefix, p.rank, n.king_id FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
+                String getPlayerNationSQL = "SELECT n.prefix, p.rank, n.king_id, p.discord_code, p.discord_id FROM player as p inner join nation as n on p.nation=n.name WHERE p.uid = ?;";
                 ResultSet rsPlayerNation = SQLHelper.query(getPlayerNationSQL,
                         playerId);
                 if (rsPlayerNation.next()) {
@@ -78,6 +91,17 @@ public class Events implements Listener {
                     }
                     nationPrefixCache.put(playerId,
                             rsPlayerNation.getString("prefix"));
+
+                    // check if the player has a discord code
+                    String discordId = rsPlayerNation.getString("discord_id");
+                    String discordCode = rsPlayerNation.getString("discord_code");
+                    if (discordId != null) {
+                        // check if the player has the discord code in their name
+                        event.getPlayer().sendMessage("§aConnect to discord by typing §e§l/code "
+                                + discordCode + "§r§a in the #main channel");
+                        // send a clickable link to the discord server
+                        event.getPlayer().spigot().sendMessage(Discord.getInviteLinkComponent());
+                    }
                 } else {
                     NationsPlus.LOGGER.info("Player is not in a nation!");
                     event.getPlayer().sendMessage("§aPlease join a nation!");
@@ -104,6 +128,28 @@ public class Events implements Listener {
         event.setCancelled(Crown.isCrownItem(event.getItemDrop().getItemStack()));
     }
 
+    @EventHandler
+    public void onPlayerRespawn(PlayerRespawnEvent event) {
+        // get the player
+        Player player = event.getPlayer();
+        try {
+            // get the player's nation
+            DBPlayer dbPlayer = playerHelper.getPlayer(player.getUniqueId().toString());
+            DBNation dbNation = nationHelper.getNation(dbPlayer.nation);
+            if (dbNation != null && dbPlayer != null && dbNation.king_id.equals(dbPlayer.uid)) {
+                // Check if the player is the king of the nation
+                // Give the player the crown
+                player.getInventory().setHelmet(Crown.crown(dbNation.name));
+            }
+        } catch (SQLException e) {
+            NationsPlus.LOGGER.info(e.getMessage());
+            player.sendMessage("§cAn error occured while trying to get your nation!");
+        } catch (ExceptionBase e) {
+            NationsPlus.LOGGER.info(e.getMessage());
+        }
+
+    }
+
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerDeath(PlayerDeathEvent event) {
         // Get the player who died
@@ -112,6 +158,18 @@ public class Events implements Listener {
         try {
             // Check if the player was wearing a helmet with "§8crown" in its lore
             if (Crown.isCrownItem(victim.getInventory().getHelmet())) {
+                NationsPlus.LOGGER.info("Player was wearing a crown!");
+                List<ItemStack> list = event.getDrops();
+                Iterator<ItemStack> i = list.iterator();
+                while (i.hasNext()) {
+                    ItemStack item = i.next();
+                    if (Crown.isCrownItem(item)) {
+                        NationsPlus.LOGGER.info("Removing crown from drops!");
+                        i.remove();
+                    }
+                }
+
+                victim.getInventory().setHelmet(null);
                 // check if the player is dead by a player
                 if (victim.getKiller() instanceof Player) {
                     // Get the player who killed the player
@@ -122,31 +180,42 @@ public class Events implements Listener {
                     DBPlayer victimDB = playerHelper.getPlayer(victim.getUniqueId().toString());
                     /* Logic if killer and victim is in the same nation */
                     if (killerDB.nation.equals(victimDB.nation)) {
+
+                        NationsPlus.LOGGER.info("Killer and victim is in the same nation!");
                         // remove the crown from the victim's head
                         // copy the crown to the killer's head
-                        ItemStack crown = victim.getInventory().getHelmet();
-                        ItemStack killersOldHelmet = killer.getInventory().getHelmet();
-                        if (killersOldHelmet != null) {
-                            // check if killers inventory is full
-                            if (killer.getInventory().firstEmpty() == -1) {
-                                // drop the old helmet on the ground
-                                killer.getWorld().dropItemNaturally(killer.getLocation(), killersOldHelmet);
-                            } else {
-                                // put the old helmet in the killer's inventory
-                                killer.getInventory().addItem(killersOldHelmet);
-                            }
+                        ItemStack newCrown = Crown.crown(killerDB.nation);
+                        // check if killers inventory is full
+                        if (killer.getInventory().firstEmpty() == -1) {
+                            // drop the old helmet on the ground
+                            killer.getWorld().dropItemNaturally(killer.getLocation(), newCrown);
                         }
-                        killer.getInventory().setHelmet(crown);
-                        victim.getInventory().setHelmet(null);
+                        killer.getInventory().setHelmet(newCrown);
+
                         // check if the killer is the same nation as the victim
                         // if that is the case, make the killer the new king of the nation
-                        String updateNationKingSQL = "UPDATE nation SET king=? WHERE name=?;";
+                        String updateNationKingSQL = "UPDATE nation SET king_id=? WHERE name=?;";
                         SQLHelper.update(updateNationKingSQL, killerDB.uid,
                                 killerDB.nation);
 
                         return;
                     } else {
                         /* Victim and killer is not in the same nation. */
+                        NationsPlus.LOGGER.info("Killer and victim is not in the same nation!");
+                        // get nation of the victim
+                        DBNation victimNation = nationHelper.getNation(victimDB.nation);
+                        // get nation of the killer
+                        DBNation killerNation = nationHelper.getNation(killerDB.nation);
+
+                        addBalanceNation(killerNation.name, victimNation.balance);
+                        addBalanceNation(victimNation.name, -victimNation.balance);
+
+                        // announce that king has been killed and all the money has been transfered
+                        // to the killer nation
+                        Bukkit.broadcastMessage("§6[§4§lKING FALLEN§r§6]§a The king of §l§e" + victimNation.name
+                                + "§r§a has been killed! All the money ("
+                                + MoneyFormat.dollarFormat.format(victimNation.balance) + ") has been transfered to §l"
+                                + killerNation.name + "§r§a!");
                     }
 
                 }
