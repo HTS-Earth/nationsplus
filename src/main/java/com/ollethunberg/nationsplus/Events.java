@@ -39,10 +39,6 @@ import com.ollethunberg.nationsplus.lib.models.db.DBNation;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 import com.ollethunberg.nationsplus.misc.Discord;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.ComponentBuilder;
-
 public class Events extends WalletBalanceHelper implements Listener {
 
     private Plugin plugin = NationsPlus.getPlugin(NationsPlus.class);
@@ -95,7 +91,7 @@ public class Events extends WalletBalanceHelper implements Listener {
                     // check if the player has a discord code
                     String discordId = rsPlayerNation.getString("discord_id");
                     String discordCode = rsPlayerNation.getString("discord_code");
-                    if (discordId != null) {
+                    if (discordId == null) {
                         // check if the player has the discord code in their name
                         event.getPlayer().sendMessage("§aConnect to discord by typing §e§l/code "
                                 + discordCode + "§r§a in the #main channel");
@@ -128,7 +124,7 @@ public class Events extends WalletBalanceHelper implements Listener {
         event.setCancelled(Crown.isCrownItem(event.getItemDrop().getItemStack()));
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void onPlayerRespawn(PlayerRespawnEvent event) {
         // get the player
         Player player = event.getPlayer();
@@ -141,6 +137,17 @@ public class Events extends WalletBalanceHelper implements Listener {
                 // Give the player the crown
                 player.getInventory().setHelmet(Crown.crown(dbNation.name));
             }
+            // check if player has a bed
+            if (player.getBedSpawnLocation() != null) {
+                // teleport the player to their bed
+                event.setRespawnLocation(player.getBedSpawnLocation());
+            } else if (dbNation != null && dbPlayer != null) {
+                // teleport the player to the nation spawn
+                Location nationSpawnLocation = new Location(player.getWorld(),
+                        dbNation.x, dbNation.y, dbNation.z);
+                event.setRespawnLocation(nationSpawnLocation);
+            }
+
         } catch (SQLException e) {
             NationsPlus.LOGGER.info(e.getMessage());
             player.sendMessage("§cAn error occured while trying to get your nation!");
