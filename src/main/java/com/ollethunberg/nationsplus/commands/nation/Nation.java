@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.RegisteredServiceProvider;
 
 import com.ollethunberg.nationsplus.Events;
 import com.ollethunberg.nationsplus.NationsPlus;
@@ -27,6 +28,10 @@ import com.ollethunberg.nationsplus.lib.helpers.WalletBalanceHelper;
 import com.ollethunberg.nationsplus.lib.models.db.DBPlayer;
 import com.ollethunberg.nationsplus.misc.Discord;
 
+import net.luckperms.api.LuckPerms;
+import net.luckperms.api.model.user.User;
+import net.luckperms.api.node.Node;
+
 public class Nation extends WalletBalanceHelper {
     NationHelper nationHelper = new NationHelper();
     NationGUI nationGUI = new NationGUI();
@@ -34,6 +39,15 @@ public class Nation extends WalletBalanceHelper {
     Tax tax = new Tax();
     PlayerHelper playerHelper = new PlayerHelper();
     NationRelationship nationRelationship = new NationRelationship();
+    LuckPerms lpApi;
+
+    public Nation() {
+        super();
+        RegisteredServiceProvider<LuckPerms> provider = Bukkit.getServicesManager().getRegistration(LuckPerms.class);
+        if (provider != null) {
+            lpApi = provider.getProvider();
+        }
+    }
 
     void create(String nationName, String prefix, Player king) throws SQLException {
         String insertNewNationSQL = "INSERT INTO nation(name, prefix, king_id, created_date, kills, balance) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 0,0);";
@@ -47,6 +61,16 @@ public class Nation extends WalletBalanceHelper {
         king.sendMessage("§2Your nation was successfully created!");
 
         NationAutoComplete.nations.add(nationName);
+        // execute commands:
+        // nte group add [nationName]
+        // nte group valtara permission nte.[nationName]
+        // nte group valtara prefix '&a[(nationName)]&r'
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "nte group add " + nationName);
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "nte group " + nationName + " permission nte."
+                + nationName);
+        Bukkit.getServer().dispatchCommand(Bukkit.getConsoleSender(), "nte group " + nationName + " prefix '&a["
+                + nationName + "]&r '");
+
     }
 
     void list(Player player) throws SQLException {
@@ -88,8 +112,14 @@ public class Nation extends WalletBalanceHelper {
         SQLHelper.update(insertCodeSQL, code, player.getUniqueId().toString());
         // send code to player
         player.spigot().sendMessage(Discord.getInviteLinkComponent());
-        player.sendMessage("§aEnter your nation discord role by typing §e/code " + code + "§r in the main channel");
+        player.sendMessage("§aEnter your nation discord role by typing §e/code " + code
+                + "§r§a in the main §l§9DISCORD§r channel");
 
+        // add the permission nte.[nationName] to the player
+        User user = lpApi.getUserManager().getUser(player.getUniqueId());
+
+        user.data().add(Node.builder("nte." + nationName.toLowerCase()).build());
+        lpApi.getUserManager().saveUser(user);
     }
 
     public void withdraw(Player player, Integer amount, String receiverPlayerName)
