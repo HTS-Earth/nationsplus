@@ -54,7 +54,6 @@ public class NationGUI extends GUIManager implements Listener {
                     "§7VAT: §r§l§a" + nation.vat_tax + "%",
                     "§7Money transfer tax: §r§l§a" + nation.transfer_tax + "%",
                     "§7King: §r§l§a" + nation.king_name,
-                    "§7Successor: §r§l§a" + nation.successor_name,
                     "§7Members: §r§l§a" + nation.membersCount,
                     "§7Kills: §r§l§a" + nation.kills
 

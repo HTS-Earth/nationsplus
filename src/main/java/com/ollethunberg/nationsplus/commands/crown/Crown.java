@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import com.ollethunberg.nationsplus.Events;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
 import com.ollethunberg.nationsplus.lib.exceptions.IllegalArgumentException;
 import com.ollethunberg.nationsplus.lib.exceptions.PlayerNotFoundException;
@@ -88,6 +89,11 @@ public class Crown extends SQLHelper {
         oldKing.sendMessage("§aYou have passed the crown to " + newKingName);
         // Message the new king that they have been crowned
         newKing.sendMessage("§aYou have been crowned as the king of " + dbOldKing.nation);
+
+        // remove the prefix from the old king
+        Events.rankPrefixCache.remove(oldKing.getUniqueId().toString());
+        // add the prefix to the new king
+        Events.rankPrefixCache.put(newKing.getUniqueId().toString(), "§6[King]§r ");
 
         // announce to the server that the crown has been passed
         Bukkit.broadcastMessage("§l§6[NEW KING§6]§r [§2§l" + dbOldKing.nation + "§r] §4" + oldKing.getName()

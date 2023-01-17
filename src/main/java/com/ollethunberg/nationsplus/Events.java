@@ -405,6 +405,11 @@ public class Events extends WalletBalanceHelper implements Listener {
                 try {
                     ResultSet rs = SQLHelper.query(getPlayerInfoSQL, p.getUniqueId().toString());
                     if (rs.next()) {
+                        if (rs.getString("reinforcement_mode").equals("OFF")) {
+                            p.sendMessage(
+                                    "§cYou have reinforcement mode off! Turn it on with /reinforcement nation or /reinforcement private");
+                            return;
+                        }
                         // Check if block is already reinforced
                         String getReinforcementSQL = "SELECT * FROM block_reinforcement WHERE block_id = ? AND world = ?;";
                         ResultSet rsReinforcement = SQLHelper.query(getReinforcementSQL, block_id,

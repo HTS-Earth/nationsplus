@@ -1,5 +1,12 @@
 package com.ollethunberg.nationsplus;
 
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.text.NumberFormat;
+import java.util.Locale;
+import java.util.logging.Logger;
+
 import org.bukkit.configuration.Configuration;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.postgresql.Driver;
@@ -9,14 +16,10 @@ import com.ollethunberg.nationsplus.commands.crown.CrownHandler;
 import com.ollethunberg.nationsplus.commands.nation.NationAutoComplete;
 import com.ollethunberg.nationsplus.commands.nation.NationGUI;
 import com.ollethunberg.nationsplus.commands.nation.NationHandler;
+import com.ollethunberg.nationsplus.commands.nationchat.NationChatHandler;
 import com.ollethunberg.nationsplus.commands.reinforce.ReinforceAutoComplete;
 import com.ollethunberg.nationsplus.commands.reinforce.ReinforceHandler;
 import com.ollethunberg.nationsplus.lib.SQLHelper;
-
-import java.sql.*;
-import java.text.NumberFormat;
-import java.util.Locale;
-import java.util.logging.Logger;
 
 public final class NationsPlus extends JavaPlugin {
     public Connection connection;
@@ -32,6 +35,7 @@ public final class NationsPlus extends JavaPlugin {
     NationHandler nationHandler;
     CrownHandler crownHandler;
     ReinforceHandler reinforceHandler;
+    NationChatHandler nationChatHandler;
 
     @Override
     public void onEnable() {
@@ -62,7 +66,7 @@ public final class NationsPlus extends JavaPlugin {
             crownHandler = new CrownHandler();
             reinforceHandler = new ReinforceHandler();
             nationGUI = new NationGUI();
-
+            nationChatHandler = new NationChatHandler();
             // Register events listeners that needs a SQL connection
             getServer().getPluginManager().registerEvents(new Events(), this);
             getServer().getPluginManager().registerEvents(nationGUI, this);
@@ -72,6 +76,7 @@ public final class NationsPlus extends JavaPlugin {
             getCommand("nation").setExecutor(nationHandler);
             getCommand("crown").setExecutor(crownHandler);
             getCommand("reinforce").setExecutor(reinforceHandler);
+            getCommand("nationchat").setExecutor(nationChatHandler);
 
             getCommand("nation").setTabCompleter(new NationAutoComplete());
             getCommand("crown").setTabCompleter(new CrownAutoComplete());

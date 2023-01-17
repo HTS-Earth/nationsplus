@@ -25,7 +25,6 @@ public class NationHelper extends SQLHelper {
 
         nation.name = rs.getString("name");
         nation.king_id = rs.getString("king_id");
-        nation.successor_id = rs.getString("successor_id");
         nation.prefix = rs.getString("prefix");
         nation.balance = rs.getFloat("balance");
         nation.kills = rs.getInt("kills");

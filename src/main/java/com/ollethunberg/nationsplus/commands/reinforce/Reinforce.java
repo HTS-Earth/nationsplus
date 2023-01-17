@@ -37,18 +37,21 @@ public class Reinforce extends WalletBalanceHelper {
             reinforcementType = reinforcementType.toUpperCase();
             // check if newReinforcementMode is "N" or "P" and set it to "NATION" or
             // "PRIVATE"
-            if (reinforcementType.equals("N")) {
-                reinforcementType = "NATION";
-            } else if (reinforcementType.equals("P")) {
-                reinforcementType = "PRIVATE";
+            switch (reinforcementType) {
+                case "N", "NATION":
+                    reinforcementType = "NATION";
+                    break;
+                case "P", "PRIVATE":
+                    reinforcementType = "PRIVATE";
+                    break;
+                case "OFF", "NONE":
+                    reinforcementType = "OFF";
+                    break;
+                default:
+                    throw new IllegalArgumentException(player,
+                            "Invalid reinforcement mode. Valid modes are: NATION, PRIVATE, OFF");
             }
-            if (reinforcementType.equals("PRIVATE") || reinforcementType.equals("NATION")) {
-                setReinforcementMode(reinforcementType, player);
-            } else {
-                throw new IllegalArgumentException(player,
-                        "Invalid reinforcement mode. Valid modes are: NATION, PRIVATE");
-            }
-
+            setReinforcementMode(reinforcementType, player);
         }
 
     }
